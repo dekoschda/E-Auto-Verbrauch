@@ -52,6 +52,18 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
  #page-overview .overview-main .card strong{font-size:.98rem}
  #page-overview .overview-main .card small{font-size:.65rem}
 }
+
+#page-overview .overview-main{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px}
+#page-overview .overview-main .metric:nth-child(3){grid-column:1 / -1}
+#page-overview .overview-costs{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px}
+#page-overview .overview-separator{height:14px}
+.vehicle-specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+.spec{background:#333;border:1px solid #505050;border-radius:10px;padding:9px;min-width:0}
+.spec small{display:block;color:#bbb;font-size:.72rem;margin-bottom:2px}
+.spec strong{font-size:.94rem}
+.vehicle-hero h2{margin-bottom:2px}
+.dock{grid-template-columns:repeat(4,1fr)!important}
+@media(min-width:700px){.vehicle-specs{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style></head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
@@ -91,14 +103,48 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung für Handywechsel/Wiederherstellung.</p>
 <div class="actions"><button id="csvExport">CSV exportieren</button><button id="csvImport">CSV importieren</button><button id="backup">Backup (.json)</button><button id="restore">Backup wiederherstellen</button><input id="file" type="file" accept=".csv,.json" hidden></div></section>
 </div>
+
+<div id="page-vehicle" class="page">
+<section class="panel vehicle-hero">
+<h2>MG S5 EV Luxury Long Range</h2>
+<p class="muted">Fahrzeugdaten und technische Referenzwerte</p>
+<div class="vehicle-specs">
+<div class="spec"><small>Nutzbarer Akku</small><strong>62,1 kWh</strong></div>
+<div class="spec"><small>Nominaler Akku</small><strong>64 kWh</strong></div>
+<div class="spec"><small>Leistung</small><strong>170 kW / 231 PS</strong></div>
+<div class="spec"><small>Drehmoment</small><strong>350 Nm</strong></div>
+<div class="spec"><small>Antrieb</small><strong>Heckantrieb</strong></div>
+<div class="spec"><small>0–100 km/h</small><strong>6,3 s</strong></div>
+<div class="spec"><small>Höchstgeschwindigkeit</small><strong>190 km/h</strong></div>
+<div class="spec"><small>WLTP-Verbrauch</small><strong>16,0 kWh/100 km</strong></div>
+<div class="spec"><small>WLTP-Reichweite</small><strong>465 km</strong></div>
+<div class="spec"><small>DC 10–80 %</small><strong>ca. 28 min</strong></div>
+<div class="spec"><small>Kofferraum</small><strong>453 / 1.441 l</strong></div>
+<div class="spec"><small>Anhängelast</small><strong>750 kg</strong></div>
+</div>
+</section>
+<section class="panel">
+<h2>Eigene Fahrzeugdaten</h2>
+<div class="grid">
+<label>Fahrzeugname<input id="vehicleName" type="text" value="MG S5 EV Luxury Long Range"></label>
+<label>Nutzbare Akkukapazität<input id="batteryCapacity" type="number" min="1" step="0.1" value="62.1"></label>
+</div>
+<div class="actions"><button id="saveVehicle" type="button">Speichern</button><span id="vehicleMsg" class="muted"></span></div>
+<p class="muted">Die Fahrzeugdaten sind separat gespeichert und können später für weitere Auswertungen verwendet werden. Der aktuelle Verbrauch bleibt unbereinigt und basiert auf den tatsächlich geladenen kWh.</p>
+</section>
+</div>
 <nav class="dock" aria-label="Seitennavigation">
 <button type="button" class="active" data-page="history" aria-label="Ladehistorie"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="18" cy="18" r="2"/></svg><small>Historie</small></button>
 <button type="button" data-page="newcharge" aria-label="Neuer Ladevorgang"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><small>Neu</small></button>
 <button type="button" data-page="overview" aria-label="Übersicht"><svg viewBox="0 0 24 24"><rect x="4" y="12" width="3" height="7"/><rect x="10.5" y="8" width="3" height="11"/><rect x="17" y="4" width="3" height="15"/></svg><small>Übersicht</small></button>
+<button type="button" data-page="vehicle" aria-label="Fahrzeug"><svg viewBox="0 0 24 24"><path d="M5 16l1-5 2-3h8l2 3 1 5"/><path d="M4 16h16v3h-2v-2H6v2H4z"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></svg><small>Fahrzeug</small></button>
 </nav>
 <script>
 const $=x=>document.getElementById(x), euro=n=>Number(n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}), num=(n,d=1)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
 const KEY='ev-charges-v2'
+const VEHICLE_KEY='ev-vehicle-v2';
+let vehicle=JSON.parse(localStorage.getItem(VEHICLE_KEY)||'null')||{name:'MG S5 EV Luxury Long Range',capacity:62.1};
+
 let monthlyCostMode='gross';
 const VEHICLE_KEY='ev-vehicle-v1';
 let vehicle=JSON.parse(localStorage.getItem(VEHICLE_KEY)||'null')||{name:'MG S5 EV Luxury',capacity:62.1};
@@ -189,6 +235,15 @@ $('costModeBtn').addEventListener('click',()=>{
  monthlyCostMode=monthlyCostMode==='gross'?'net':'gross';
  $('costModeBtn').textContent=monthlyCostMode==='gross'?'Brutto':'Netto';
  render();
+});
+
+$('vehicleName').value=vehicle.name||'MG S5 EV Luxury Long Range';
+$('batteryCapacity').value=vehicle.capacity||62.1;
+$('saveVehicle').addEventListener('click',()=>{
+ const name=$('vehicleName').value.trim(),cap=Number($('batteryCapacity').value);
+ if(!name||!Number.isFinite(cap)||cap<=0){$('vehicleMsg').textContent='Bitte gültige Fahrzeugdaten eingeben.';return}
+ vehicle={name,capacity:cap};localStorage.setItem(VEHICLE_KEY,JSON.stringify(vehicle));
+ $('vehicleMsg').textContent='Gespeichert.';setTimeout(()=>{$('vehicleMsg').textContent=''},1600);
 });
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');render();calcNet();
 </script></body></html>
