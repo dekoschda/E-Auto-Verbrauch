@@ -36,6 +36,11 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
  #page-overview .dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}
  #page-overview .panel{padding:10px 11px}
 }
+
+#page-overview .overview-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.month-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.month-title h2{margin:0}
+.cost-toggle{width:auto!important;min-height:32px!important;padding:4px 10px!important;margin:0;font-size:.76rem!important}
 </style></head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
@@ -58,17 +63,25 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 </form><div class="actions"><button id="save">Speichern</button><button id="cancelEdit" hidden>Bearbeiten abbrechen</button><span id="msg" class="muted"></span></div></section>
 </div>
 <div id="page-overview" class="page">
-<section class="grid">
-<div class="card metric" id="t1">Ø Verbrauch<br><strong id="avg">–</strong><br><small>kWh/100 km</small></div>
+<section class="grid overview-metrics">
+<div class="card metric" id="t1">Ø Verbrauch<br><strong id="avg">–</strong><br><small>Verbrauch</small></div>
 <div class="card metric" id="t2">Kosten brutto<br><strong id="grossTotal">0,00 €</strong><br><small>gesamt</small></div>
 <div class="card metric" id="t3">Kosten netto<br><strong id="netTotal">0,00 €</strong><br><small>gesamt</small></div>
 <div class="card metric" id="t4">Geladen<br><strong id="energyTotal">0,0 kWh</strong><br><small>gesamt</small></div>
-<div class="card metric">Seit letzter Fahrt<br><strong id="lastDistance">–</strong><br><small>km</small></div>
+<div class="card metric">Gesamtkilometer<br><strong id="totalKm">–</strong><br><small>km</small></div>
 </section>
 <br>
-<section class="grid" style="grid-template-columns:1fr 1fr"><div class="panel"><h2>Kosten pro Monat</h2><div id="months" class="muted">Noch keine Daten.</div></div>
+<section class="grid" style="grid-template-columns:1fr 1fr"><div class="panel"><div class="month-title"><h2>Kosten pro Monat</h2><button id="costModeBtn" type="button" class="cost-toggle">Brutto</button></div><div id="months" class="muted">Noch keine Daten.</div></div>
 <div class="panel"><h2>Jahresauswertung</h2><div id="years" class="muted">Noch keine Daten.</div></div></section>
 <br>
+<section class="panel"><h2>Fahrzeugdaten</h2>
+<p class="muted">Diese Angaben werden für die Verbrauchsberechnung mit Akkustand verwendet.</p>
+<div class="grid">
+<label>Fahrzeug<input id="vehicleName" type="text" value="MG S5 EV Luxury"></label>
+<label>Nutzbare Akkukapazität (kWh)<input id="batteryCapacity" type="number" min="1" step="0.1" value="62.1"></label>
+</div>
+<div class="actions"><button id="saveVehicle" type="button">Fahrzeugdaten speichern</button><span id="vehicleMsg" class="muted"></span></div>
+</section><br>
 <section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung für Handywechsel/Wiederherstellung.</p>
 <div class="actions"><button id="csvExport">CSV exportieren</button><button id="csvImport">CSV importieren</button><button id="backup">Backup (.json)</button><button id="restore">Backup wiederherstellen</button><input id="file" type="file" accept=".csv,.json" hidden></div></section>
 </div>
@@ -80,6 +93,10 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <script>
 const $=x=>document.getElementById(x), euro=n=>Number(n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}), num=(n,d=1)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
 const KEY='ev-charges-v2'
+let monthlyCostMode='gross';
+const VEHICLE_KEY='ev-vehicle-v1';
+let vehicle=JSON.parse(localStorage.getItem(VEHICLE_KEY)||'null')||{name:'MG S5 EV Luxury',capacity:62.1};
+
 const PROVIDER_KEY='ev-providers-v1';
 const DEFAULT_PROVIDERS=['EWE Go','Aldi Süd','Büro'];
 let providers=JSON.parse(localStorage.getItem(PROVIDER_KEY)||'null')||[...DEFAULT_PROVIDERS];
@@ -110,21 +127,38 @@ $('date').value=new Date().toISOString().slice(0,10);
 function calcNet(){let g=+$('gross').value||0,v=+$('vat').value,n=g/(1+v/100);$('netPreview').value=n.toFixed(2);return n}$('gross').oninput=calcNet;$('vat').onchange=calcNet;
 
 function esc(s){let d=document.createElement('div');d.textContent=s??'';return d.innerHTML}
-function calculated(){let s=[...data].sort((a,b)=>a.date.localeCompare(b.date)||a.odo-b.odo);return s.map((x,i)=>{let dist=i&&x.odo>s[i-1].odo?x.odo-s[i-1].odo:null;return {...x,dist,cons:dist?x.kwh/dist*100:null}})}
+function calculated(){
+ let s=[...data].sort((a,b)=>a.date.localeCompare(b.date)||a.odo-b.odo);
+ return s.map((x,i)=>{
+   let dist=i&&x.odo>s[i-1].odo?x.odo-s[i-1].odo:null;
+   let cons=null,usedKwh=null,socDrop=null;
+   if(dist&&i){
+     const prevEnd=Number(s[i-1].end),curStart=Number(x.start),cap=Number(vehicle.capacity);
+     if(Number.isFinite(prevEnd)&&Number.isFinite(curStart)&&Number.isFinite(cap)&&cap>0){
+       socDrop=prevEnd-curStart;
+       if(socDrop>=0){
+         usedKwh=cap*socDrop/100;
+         cons=usedKwh/dist*100;
+       }
+     }
+   }
+   return {...x,dist,cons,usedKwh,socDrop}
+ })
+}
 function persist(){localStorage.setItem(KEY,JSON.stringify(data));render()}
-function render(){let c=calculated(),valid=c.filter(x=>x.cons!=null),dist=valid.reduce((a,x)=>a+x.dist,0),en=valid.reduce((a,x)=>a+x.kwh,0);
-$('avg').textContent=dist?num(en/dist*100):'–';
-let byOdo=[...data].sort((a,b)=>a.odo-b.odo||a.date.localeCompare(b.date));
-let lastKm=byOdo.length>1 && byOdo[byOdo.length-1].odo>byOdo[byOdo.length-2].odo ? byOdo[byOdo.length-1].odo-byOdo[byOdo.length-2].odo : null;
-$('lastDistance').textContent=lastKm!=null?num(lastKm,0):'–';
+function render(){let c=calculated(),valid=c.filter(x=>x.dist>0&&x.usedKwh!=null),dist=valid.reduce((a,x)=>a+x.dist,0),en=valid.reduce((a,x)=>a+x.usedKwh,0);
+/* Verbrauch aus SoC-Abfall zwischen zwei Ladevorgängen und nutzbarer Akkukapazität. */
+$('avg').textContent=dist>0?num(en/dist*100):'–';
+let odoValues=data.map(x=>Number(x.odo)).filter(Number.isFinite);
+$('totalKm').textContent=odoValues.length?num(Math.max(...odoValues),0):'–';
 $('grossTotal').textContent=euro(data.reduce((a,x)=>a+x.gross,0));$('netTotal').textContent=euro(data.reduce((a,x)=>a+x.net,0));$('energyTotal').textContent=num(data.reduce((a,x)=>a+x.kwh,0))+' kWh';
-let m={};data.forEach(x=>m[x.date.slice(0,7)]=(m[x.date.slice(0,7)]||0)+x.gross);let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0])),mx=Math.max(1,...me.map(x=>x[1]));
+let m={};data.forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+v});let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0])),mx=Math.max(1,...me.map(x=>x[1]));
 $('months').innerHTML=me.length?me.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric'}).format(new Date(Date.UTC(y,mo-1,1)));return `<div class="month"><div class="month-head"><span>${lab}</span><strong>${euro(v)}</strong></div><div class="track"><div class="bar" style="width:${Math.max(1,v/mx*100)}%"></div></div></div>`}).join(''):'Noch keine Daten.';
 let ys={};data.forEach(x=>{let y=x.date.slice(0,4);if(!ys[y])ys[y]={gross:0,net:0,kwh:0,count:0};ys[y].gross+=x.gross;ys[y].net+=x.net;ys[y].kwh+=x.kwh;ys[y].count++});
 $('years').innerHTML=Object.keys(ys).length?Object.entries(ys).sort((a,b)=>b[0].localeCompare(a[0])).map(([y,v])=>`<div class="year"><span><strong>${y}</strong><br><small>${v.count} Ladevorgänge · ${num(v.kwh)} kWh</small></span><span style="text-align:right">${euro(v.gross)}<br><small>netto ${euro(v.net)}</small></span></div>`).join(''):'Noch keine Daten.';
 $('historyCards').innerHTML=[...c].reverse().map(x=>`<article class="charge-card">
 <div class="charge-top"><div><div class="charge-date">${x.date.split('-').reverse().join('.')}</div><small class="muted">${esc(x.place)||'Kein Ladeort'} · ${esc(x.provider)||'Kein Anbieter'}</small></div><div class="charge-cost">${euro(x.gross)}<br><small class="muted">${euro(x.gross/x.kwh)}/kWh</small></div></div>
-<div class="charge-main"><div class="charge-stat"><small>Geladen</small><strong>${num(x.kwh,2)} kWh</strong></div><div class="charge-stat"><small>km-Stand</small><strong>${num(x.odo,0)}</strong></div><div class="charge-stat"><small>kWh/100 km</small><strong>${x.cons?num(x.cons):'–'}</strong></div></div>
+<div class="charge-main"><div class="charge-stat"><small>Geladen</small><strong>${num(x.kwh,2)} kWh</strong></div><div class="charge-stat"><small>km-Stand</small><strong>${num(x.odo,0)}</strong></div><div class="charge-stat"><small>Verbrauch</small><strong>${x.cons?num(x.cons):'–'}</strong></div></div>
 <div class="charge-meta"><span>Akku: ${x.start} → ${x.end}%</span><span>Fahrt: ${x.dist?num(x.dist,0)+' km':'–'}</span><span>Netto: ${euro(x.net)}</span><span>MwSt.: ${x.vat}%</span></div>
 <div class="charge-actions"><button type="button" onclick="editEntry('${x.id}')">Bearbeiten</button><button type="button" onclick="delEntry('${x.id}')">Löschen</button></div>
 </article>`).join('') || '<p class="muted">Noch keine Ladevorgänge vorhanden.</p>';
@@ -155,5 +189,21 @@ function goPage(name){
   if(b)b.click();
 }
 
+$('costModeBtn').addEventListener('click',()=>{
+ monthlyCostMode=monthlyCostMode==='gross'?'net':'gross';
+ $('costModeBtn').textContent=monthlyCostMode==='gross'?'Brutto':'Netto';
+ render();
+});
+$('vehicleName').value=vehicle.name||'';
+$('batteryCapacity').value=vehicle.capacity||62.1;
+$('saveVehicle').addEventListener('click',()=>{
+ const cap=Number($('batteryCapacity').value),name=$('vehicleName').value.trim();
+ if(!Number.isFinite(cap)||cap<=0){$('vehicleMsg').textContent='Bitte eine gültige Akkukapazität eingeben.';return}
+ vehicle={name:name||'Fahrzeug',capacity:cap};
+ localStorage.setItem(VEHICLE_KEY,JSON.stringify(vehicle));
+ $('vehicleMsg').textContent='Gespeichert.';
+ render();
+ setTimeout(()=>{$('vehicleMsg').textContent=''},1800);
+});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');render();calcNet();
 </script></body></html>
