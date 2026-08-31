@@ -41,6 +41,17 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 .month-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .month-title h2{margin:0}
 .cost-toggle{width:auto!important;min-height:32px!important;padding:4px 10px!important;margin:0;font-size:.76rem!important}
+
+#page-overview .overview-metrics{display:grid;gap:7px}
+#page-overview .overview-main{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+#page-overview .overview-costs{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#page-overview .overview-separator{height:12px}
+@media(max-width:520px){
+ #page-overview .overview-main{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #page-overview .overview-main .card{padding:8px 4px;font-size:.72rem}
+ #page-overview .overview-main .card strong{font-size:.98rem}
+ #page-overview .overview-main .card small{font-size:.65rem}
+}
 </style></head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
@@ -63,25 +74,20 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 </form><div class="actions"><button id="save">Speichern</button><button id="cancelEdit" hidden>Bearbeiten abbrechen</button><span id="msg" class="muted"></span></div></section>
 </div>
 <div id="page-overview" class="page">
-<section class="grid overview-metrics">
-<div class="card metric" id="t1">Ø Verbrauch<br><strong id="avg">–</strong><br><small>Verbrauch</small></div>
+<section class="overview-metrics overview-main">
+<div class="card metric">Gesamtkilometer<br><strong id="totalKm">–</strong><br><small>km</small></div>
+<div class="card metric" id="t1">Ø Verbrauch<br><strong id="avg">–</strong><br><small>kWh/100 km</small></div>
+<div class="card metric" id="t4">Geladen<br><strong id="energyTotal">0,0 kWh</strong><br><small>gesamt</small></div>
+</section>
+<div class="overview-separator"></div>
+<section class="overview-metrics overview-costs">
 <div class="card metric" id="t2">Kosten brutto<br><strong id="grossTotal">0,00 €</strong><br><small>gesamt</small></div>
 <div class="card metric" id="t3">Kosten netto<br><strong id="netTotal">0,00 €</strong><br><small>gesamt</small></div>
-<div class="card metric" id="t4">Geladen<br><strong id="energyTotal">0,0 kWh</strong><br><small>gesamt</small></div>
-<div class="card metric">Gesamtkilometer<br><strong id="totalKm">–</strong><br><small>km</small></div>
 </section>
 <br>
 <section class="grid" style="grid-template-columns:1fr 1fr"><div class="panel"><div class="month-title"><h2>Kosten pro Monat</h2><button id="costModeBtn" type="button" class="cost-toggle">Brutto</button></div><div id="months" class="muted">Noch keine Daten.</div></div>
 <div class="panel"><h2>Jahresauswertung</h2><div id="years" class="muted">Noch keine Daten.</div></div></section>
 <br>
-<section class="panel"><h2>Fahrzeugdaten</h2>
-<p class="muted">Diese Angaben werden für die Verbrauchsberechnung mit Akkustand verwendet.</p>
-<div class="grid">
-<label>Fahrzeug<input id="vehicleName" type="text" value="MG S5 EV Luxury"></label>
-<label>Nutzbare Akkukapazität (kWh)<input id="batteryCapacity" type="number" min="1" step="0.1" value="62.1"></label>
-</div>
-<div class="actions"><button id="saveVehicle" type="button">Fahrzeugdaten speichern</button><span id="vehicleMsg" class="muted"></span></div>
-</section><br>
 <section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung für Handywechsel/Wiederherstellung.</p>
 <div class="actions"><button id="csvExport">CSV exportieren</button><button id="csvImport">CSV importieren</button><button id="backup">Backup (.json)</button><button id="restore">Backup wiederherstellen</button><input id="file" type="file" accept=".csv,.json" hidden></div></section>
 </div>
@@ -131,23 +137,13 @@ function calculated(){
  let s=[...data].sort((a,b)=>a.date.localeCompare(b.date)||a.odo-b.odo);
  return s.map((x,i)=>{
    let dist=i&&x.odo>s[i-1].odo?x.odo-s[i-1].odo:null;
-   let cons=null,usedKwh=null,socDrop=null;
-   if(dist&&i){
-     const prevEnd=Number(s[i-1].end),curStart=Number(x.start),cap=Number(vehicle.capacity);
-     if(Number.isFinite(prevEnd)&&Number.isFinite(curStart)&&Number.isFinite(cap)&&cap>0){
-       socDrop=prevEnd-curStart;
-       if(socDrop>=0){
-         usedKwh=cap*socDrop/100;
-         cons=usedKwh/dist*100;
-       }
-     }
-   }
-   return {...x,dist,cons,usedKwh,socDrop}
+   let cons=dist?x.kwh/dist*100:null;
+   return {...x,dist,cons}
  })
 }
 function persist(){localStorage.setItem(KEY,JSON.stringify(data));render()}
-function render(){let c=calculated(),valid=c.filter(x=>x.dist>0&&x.usedKwh!=null),dist=valid.reduce((a,x)=>a+x.dist,0),en=valid.reduce((a,x)=>a+x.usedKwh,0);
-/* Verbrauch aus SoC-Abfall zwischen zwei Ladevorgängen und nutzbarer Akkukapazität. */
+function render(){let c=calculated(),valid=c.filter(x=>x.dist>0&&Number.isFinite(Number(x.kwh))),dist=valid.reduce((a,x)=>a+x.dist,0),en=valid.reduce((a,x)=>a+Number(x.kwh),0);
+/* Nicht bereinigter Durchschnitt: tatsächlich geladene kWh inklusive Ladeverlusten / gefahrene km. */
 $('avg').textContent=dist>0?num(en/dist*100):'–';
 let odoValues=data.map(x=>Number(x.odo)).filter(Number.isFinite);
 $('totalKm').textContent=odoValues.length?num(Math.max(...odoValues),0):'–';
@@ -193,17 +189,6 @@ $('costModeBtn').addEventListener('click',()=>{
  monthlyCostMode=monthlyCostMode==='gross'?'net':'gross';
  $('costModeBtn').textContent=monthlyCostMode==='gross'?'Brutto':'Netto';
  render();
-});
-$('vehicleName').value=vehicle.name||'';
-$('batteryCapacity').value=vehicle.capacity||62.1;
-$('saveVehicle').addEventListener('click',()=>{
- const cap=Number($('batteryCapacity').value),name=$('vehicleName').value.trim();
- if(!Number.isFinite(cap)||cap<=0){$('vehicleMsg').textContent='Bitte eine gültige Akkukapazität eingeben.';return}
- vehicle={name:name||'Fahrzeug',capacity:cap};
- localStorage.setItem(VEHICLE_KEY,JSON.stringify(vehicle));
- $('vehicleMsg').textContent='Gespeichert.';
- render();
- setTimeout(()=>{$('vehicleMsg').textContent=''},1800);
 });
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');render();calcNet();
 </script></body></html>
