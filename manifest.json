@@ -1,9 +1,0 @@
-{
-  "name": "E-Auto Verbrauch",
-  "short_name": "E-Verbrauch",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#181818",
-  "theme_color": "#2563eb",
-  "description": "Ladevorgänge, Verbrauch und Kosten eines Elektroautos erfassen und auswerten."
-}
