@@ -68,7 +68,7 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
 
-<div id="page-history" class="page active"><section class="panel">
+<div id="page-history" class="page active"><section class="panel"><div id="dataStatus" class="muted" style="margin-bottom:7px"></div>
 <div class="actions"><button id="clear" class="danger">Alle Daten löschen</button></div>
 <h2>Ladehistorie</h2>
 <p class="muted">Jeder Ladevorgang wird als eigene Kachel angezeigt.</p>
@@ -146,8 +146,6 @@ const VEHICLE_KEY='ev-vehicle-v2';
 let vehicle=JSON.parse(localStorage.getItem(VEHICLE_KEY)||'null')||{name:'MG S5 EV Luxury Long Range',capacity:62.1};
 
 let monthlyCostMode='gross';
-const VEHICLE_KEY='ev-vehicle-v1';
-let vehicle=JSON.parse(localStorage.getItem(VEHICLE_KEY)||'null')||{name:'MG S5 EV Luxury',capacity:62.1};
 
 const PROVIDER_KEY='ev-providers-v1';
 const DEFAULT_PROVIDERS=['EWE Go','Aldi Süd','Büro'];
@@ -170,7 +168,15 @@ function learnProviders(){
  if(ch){providers.sort((a,b)=>a.localeCompare(b,'de'));saveProviders()}
  renderProviders();
 }
-; let data=JSON.parse(localStorage.getItem(KEY)||'[]'), editId=null, importMode=null;
+; let data=[], editId=null, importMode=null;
+try{
+  const savedCharges=localStorage.getItem(KEY);
+  data=savedCharges?JSON.parse(savedCharges):[];
+  if(!Array.isArray(data)) data=[];
+}catch(err){
+  console.error('Ladehistorie konnte nicht gelesen werden:',err);
+  data=[];
+}
 learnProviders();
 $('addProvider').addEventListener('click',addProvider);
 $('newProvider').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addProvider()}});
@@ -188,7 +194,7 @@ function calculated(){
  })
 }
 function persist(){localStorage.setItem(KEY,JSON.stringify(data));render()}
-function render(){let c=calculated(),valid=c.filter(x=>x.dist>0&&Number.isFinite(Number(x.kwh))),dist=valid.reduce((a,x)=>a+x.dist,0),en=valid.reduce((a,x)=>a+Number(x.kwh),0);
+function render(){$('dataStatus').textContent=data.length?data.length+' gespeicherte Ladevorgänge gefunden.':'Noch keine gespeicherten Ladevorgänge.';let c=calculated(),valid=c.filter(x=>x.dist>0&&Number.isFinite(Number(x.kwh))),dist=valid.reduce((a,x)=>a+x.dist,0),en=valid.reduce((a,x)=>a+Number(x.kwh),0);
 /* Nicht bereinigter Durchschnitt: tatsächlich geladene kWh inklusive Ladeverlusten / gefahrene km. */
 $('avg').textContent=dist>0?num(en/dist*100):'–';
 let odoValues=data.map(x=>Number(x.odo)).filter(Number.isFinite);
@@ -218,7 +224,7 @@ function parseCSV(text){let lines=text.replace(/^\ufeff/,'').split(/\r?\n/).filt
 $('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let t=await f.text();if(importMode==='json'){let b=JSON.parse(t);if(!Array.isArray(b.data))throw Error();if(confirm('Aktuelle Daten durch dieses Backup ersetzen?')){data=b.data;persist()}}else{let imported=parseCSV(t);if(!imported.length)throw Error();data.push(...imported);persist();alert(imported.length+' Ladevorgänge importiert.')}}catch{alert('Datei konnte nicht importiert werden.')}e.target.value=''}
 $('clear').onclick=()=>{if(confirm('Wirklich ALLE Ladevorgänge löschen?')){data=[];persist()}}
 
-const pageNames={history:'Ladehistorie',newcharge:'Neuer Ladevorgang',overview:'Gesamtübersicht'};
+const pageNames={history:'Ladehistorie',newcharge:'Neuer Ladevorgang',overview:'Gesamtübersicht',vehicle:'Fahrzeugdaten'};
 document.querySelectorAll('.dock button[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
   document.querySelectorAll('.dock button[data-page]').forEach(b=>b.classList.toggle('active',b===btn));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));

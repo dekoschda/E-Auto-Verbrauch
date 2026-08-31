@@ -1,22 +1,17 @@
-E-Auto Verbrauch – Version 14
+E-Auto Verbrauch – Version 15 REPARATUR
 
-Dock:
-- Historie
-- Neu
-- Übersicht
-- Fahrzeug
+Wichtig:
+Version 14 enthielt versehentlich doppelte JavaScript-Deklarationen für VEHICLE_KEY und vehicle.
+Dadurch wurde das gesamte JavaScript nicht ausgeführt. Die Ladehistorie wurde dadurch nicht gelöscht;
+sie wurde lediglich nicht mehr angezeigt, sofern der Browser-LocalStorage noch vorhanden ist.
 
-Übersicht:
-- Reihe 1: Gesamtkilometer | Ø Verbrauch
-- Reihe 2: Geladen über die volle Breite
-- Abstand
-- Reihe 3: Kosten brutto | Kosten netto
-- Monatskosten weiterhin Brutto/Netto umschaltbar
+Reparatur:
+- doppelten JavaScript-Code entfernt
+- bestehender Ladehistorien-Schlüssel bleibt unverändert: ev-charges-v2
+- Fahrzeugseite im Dock funktioniert
+- Fahrzeug-Seitentitel ergänzt
+- Ladehistorie wird defensiv aus LocalStorage geladen
+- Anzeige der Anzahl gefundener gespeicherter Ladevorgänge
+- Service Worker auf Network-first umgestellt und Cache-Version erhöht, damit Updates zuverlässiger greifen
 
-Fahrzeugseite:
-MG S5 EV Luxury Long Range – technische Referenzwerte aus offiziellen MG-Motor-Unterlagen:
-62,1 kWh nutzbar / 64 kWh nominal, 170 kW / 231 PS, 350 Nm, RWD, 6,3 s, 190 km/h,
-16,0 kWh/100 km WLTP, 465 km WLTP, ca. 28 min DC 10–80 %, 453/1.441 l Kofferraum, 750 kg Anhängelast.
-
-Eigener Fahrzeugname und nutzbare Akkukapazität können gespeichert werden.
-Der App-Verbrauch bleibt unbereinigt: tatsächlich geladene kWh / gefahrene Kilometer.
+Bitte NICHT die Browser-/Website-Daten löschen, bevor die Ladehistorie wieder sichtbar ist.
