@@ -1,15 +1,9 @@
-E-Auto Verbrauch – PWA Version 7
+E-Auto Verbrauch – Version 10
 
-Navigation:
-- Kein Menü mehr.
-- Festes Dock unten mit drei Icons.
-- Seite 1: Ladehistorie.
-- Seite 2: Neuer Ladevorgang.
-- Seite 3: Gesamtübersicht.
-
-Ladehistorie:
-Jeder Ladevorgang ist eine eigene Kachel mit Datum, Ladeort, Anbieter, Kosten,
-Preis/kWh, Lademenge, Kilometerstand, Verbrauch, Akkustand, Kilometer seit
-letzter Fahrt, Netto und MwSt. Bearbeiten und Löschen sind direkt möglich.
-
-Nach dem Speichern öffnet sich die Historie. Beim Bearbeiten öffnet sich die Eingabeseite.
+Änderung:
+- Gesamtübersicht kompakter gestaltet.
+- Kleinere Kennzahlen-Kacheln und Abstände.
+- Monatskosten und Jahresauswertung platzsparender.
+- Backup-/Export-Bereich kompakter.
+- Auf dem Handy werden Kennzahlen platzsparend in zwei Spalten dargestellt.
+- Ladehistorie, Dock und Ladeanbieter-Funktion aus Version 9 bleiben erhalten.
