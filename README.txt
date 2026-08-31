@@ -1,13 +1,18 @@
-E-Auto Verbrauch – PWA Version 3
+E-Auto Verbrauch – PWA Version 4
 
-Änderungen:
-- Kachelfarben-Einstellungen entfernt.
-- Kilometer seit letzter Fahrt werden automatisch aus dem aktuellen und vorherigen Kilometerstand berechnet.
-- Der Wert wird im Dashboard und je Ladevorgang in der Historie angezeigt.
-- CSV-Import/-Export, JSON-Backup, Bearbeiten, Jahresauswertung und Offline-Funktion bleiben erhalten.
+Neue Menüstruktur:
+1. Gesamtübersicht
+   - Kennzahlen
+   - Kosten pro Monat
+   - Jahresauswertung
+   - CSV/Backup
+2. Neuer Ladevorgang
+   - separate Eingabeseite
+3. Ladehistorie
+   - separate Historienseite
+   - Bearbeiten und Löschen
 
-Berechnung:
-Kilometer seit letzter Fahrt = aktueller Kilometerstand - vorheriger Kilometerstand.
+Nach dem Speichern eines Ladevorgangs wechselt die App automatisch zur Ladehistorie.
 
-Installation:
-Dateien entpacken und die bisherigen Dateien im GitHub-Pages-Repository ersetzen.
+Installation/Update:
+Alle Dateien entpacken und die bisherigen Dateien im GitHub-Pages-Repository ersetzen.

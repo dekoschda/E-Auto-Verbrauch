@@ -8,20 +8,34 @@
 <title>E-Auto Verbrauch</title>
 <style>
 :root{font-family:system-ui,sans-serif;color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#171717;color:#f5f5f5}main{max-width:1180px;margin:auto;padding:18px}
-h1,h2{margin:.2em 0}.muted{color:#bdbdbd;font-size:.9rem}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card,.panel{background:#292929;border:1px solid #505050;border-radius:16px;padding:16px}.metric strong{font-size:1.55rem}
+h1,h2{margin:.2em 0}.topnav{position:sticky;top:0;z-index:20;background:#171717;padding:10px 0 14px;display:flex;gap:8px;flex-wrap:wrap}.topnav button{width:auto;margin:0}.topnav button.active{background:#2563eb;color:white;border-color:#2563eb}.page{display:none}.page.active{display:block}.muted{color:#bdbdbd;font-size:.9rem}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card,.panel{background:#292929;border:1px solid #505050;border-radius:16px;padding:16px}.metric strong{font-size:1.55rem}
 form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.9rem}input,select,button{width:100%;min-height:44px;margin-top:5px;border-radius:9px;border:1px solid #666;padding:9px;font:inherit}button{cursor:pointer;font-weight:650}.actions{display:flex;gap:9px;flex-wrap:wrap}.actions button{width:auto}.month{margin:17px 0}.month-head{display:flex;justify-content:space-between}.track{height:11px;background:#444;border-radius:20px;margin-top:8px}.bar{height:100%;background:#49aa55;border-radius:20px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1200px}th,td{padding:9px;border-bottom:1px solid #505050;text-align:left}.danger{border-color:#a55}.year{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #444}
 @media(max-width:780px){.grid,form}@media(max-width:440px){form,.grid{grid-template-columns:1fr}}
 </style></head>
-<body><main>
-<h1>⚡ E-Auto Verbrauch</h1><p class="muted">Ladevorgänge, Verbrauch und Kosten</p>
+<body><main><h1>⚡ E-Auto Verbrauch</h1><p class="muted">Ladevorgänge, Verbrauch und Kosten</p>
+<nav class="topnav">
+<button data-page="overview" class="active">Gesamtübersicht</button>
+<button data-page="newcharge">Neuer Ladevorgang</button>
+<button data-page="history">Ladehistorie</button>
+</nav>
+
+<div id="page-overview" class="page active">
 <section class="grid">
 <div class="card metric" id="t1">Ø Verbrauch<br><strong id="avg">–</strong><br><small>kWh/100 km</small></div>
 <div class="card metric" id="t2">Kosten brutto<br><strong id="grossTotal">0,00 €</strong><br><small>gesamt</small></div>
 <div class="card metric" id="t3">Kosten netto<br><strong id="netTotal">0,00 €</strong><br><small>gesamt</small></div>
 <div class="card metric" id="t4">Geladen<br><strong id="energyTotal">0,0 kWh</strong><br><small>gesamt</small></div>
 <div class="card metric">Seit letzter Fahrt<br><strong id="lastDistance">–</strong><br><small>km</small></div>
-</section><br>
+</section>
+<br>
+<section class="grid" style="grid-template-columns:1fr 1fr"><div class="panel"><h2>Kosten pro Monat</h2><div id="months" class="muted">Noch keine Daten.</div></div>
+<div class="panel"><h2>Jahresauswertung</h2><div id="years" class="muted">Noch keine Daten.</div></div></section>
+<br>
+<section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung für Handywechsel/Wiederherstellung.</p>
+<div class="actions"><button id="csvExport">CSV exportieren</button><button id="csvImport">CSV importieren</button><button id="backup">Backup (.json)</button><button id="restore">Backup wiederherstellen</button><input id="file" type="file" accept=".csv,.json" hidden></div></section>
+</div>
 
+<div id="page-newcharge" class="page">
 <section class="panel"><h2 id="formTitle">Neuen Ladevorgang erfassen</h2>
 <form id="form">
 <label>Datum<input id="date" type="date" required></label><label>Kilometerstand<input id="odo" type="number" min="0" required></label>
@@ -29,17 +43,13 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <label>MwSt.<select id="vat"><option value="19">19 %</option><option value="7">7 %</option><option value="0">0 %</option></select></label>
 <label>Kosten netto<input id="netPreview" readonly></label><label>Akku Beginn (%)<input id="start" type="number" min="0" max="100" required></label>
 <label>Akku Ende (%)<input id="end" type="number" min="0" max="100" required></label><label>Ort<input id="place" required></label><label>Ladeanbieter<input id="provider" required></label>
-</form><div class="actions"><button id="save">Speichern</button><button id="cancelEdit" hidden>Bearbeiten abbrechen</button><span id="msg" class="muted"></span></div></section><br>
+</form><div class="actions"><button id="save">Speichern</button><button id="cancelEdit" hidden>Bearbeiten abbrechen</button><span id="msg" class="muted"></span></div></section>
+</div>
 
-<section class="grid" style="grid-template-columns:1fr 1fr"><div class="panel"><h2>Kosten pro Monat</h2><div id="months" class="muted">Noch keine Daten.</div></div>
-<div class="panel"><h2>Jahresauswertung</h2><div id="years" class="muted">Noch keine Daten.</div></div></section><br>
-
-<section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung für Handywechsel/Wiederherstellung.</p>
-<div class="actions"><button id="csvExport">CSV exportieren</button><button id="csvImport">CSV importieren</button><button id="backup">Backup (.json)</button><button id="restore">Backup wiederherstellen</button><input id="file" type="file" accept=".csv,.json" hidden></div></section><br>
-
+<div id="page-history" class="page">
 <section class="panel"><div class="actions"><button id="clear" class="danger">Alle Daten löschen</button></div><h2>Ladehistorie</h2>
 <div class="table-wrap"><table><thead><tr><th>Datum</th><th>km</th><th>kWh</th><th>Netto</th><th>MwSt.</th><th>Brutto</th><th>€/kWh</th><th>Akku</th><th>Ort</th><th>Anbieter</th><th>Kilometer seit letzter Fahrt</th><th>kWh/100 km</th><th>Aktion</th></tr></thead><tbody id="hist"></tbody></table></div></section>
-</main>
+</div>
 <script>
 const $=x=>document.getElementById(x), euro=n=>Number(n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}), num=(n,d=1)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
 const KEY='ev-charges-v2'; let data=JSON.parse(localStorage.getItem(KEY)||'[]'), editId=null, importMode=null;
@@ -65,7 +75,7 @@ function resetForm(){editId=null;$('form').reset();$('vat').value='19';$('date')
 window.delEntry=id=>{if(confirm('Diesen Ladevorgang löschen?')){data=data.filter(x=>x.id!==id);persist()}}
 window.editEntry=id=>{let x=data.find(x=>x.id===id);if(!x)return;editId=id;['date','odo','kwh','gross','vat','start','end','place','provider'].forEach(k=>$(k).value=x[k]);$('formTitle').textContent='Ladevorgang bearbeiten';$('cancelEdit').hidden=false;calcNet();scrollTo({top:$('formTitle').offsetTop-20,behavior:'smooth'})}
 $('cancelEdit').onclick=resetForm;
-$('save').onclick=()=>{if(!$('form').reportValidity())return;let start=+$('start').value,end=+$('end').value;if(end<start){$('msg').textContent='Akku-Endstand muss größer sein.';return}let gross=+$('gross').value,vat=+$('vat').value,obj={id:editId||((crypto.randomUUID&&crypto.randomUUID())||String(Date.now())),date:$('date').value,odo:+$('odo').value,kwh:+$('kwh').value,gross,vat,net:gross/(1+vat/100),start,end,place:$('place').value.trim(),provider:$('provider').value.trim()};if(editId)data[data.findIndex(x=>x.id===editId)]=obj;else data.push(obj);persist();$('msg').textContent=editId?'Änderung gespeichert.':'Gespeichert.';resetForm()}
+$('save').onclick=()=>{if(!$('form').reportValidity())return;let start=+$('start').value,end=+$('end').value;if(end<start){$('msg').textContent='Akku-Endstand muss größer sein.';return}let gross=+$('gross').value,vat=+$('vat').value,obj={id:editId||((crypto.randomUUID&&crypto.randomUUID())||String(Date.now())),date:$('date').value,odo:+$('odo').value,kwh:+$('kwh').value,gross,vat,net:gross/(1+vat/100),start,end,place:$('place').value.trim(),provider:$('provider').value.trim()};if(editId)data[data.findIndex(x=>x.id===editId)]=obj;else data.push(obj);persist();$('msg').textContent=editId?'Änderung gespeichert.':'Gespeichert.';resetForm();goPage('history')}
 function download(name,text,type){let b=new Blob([text],{type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 $('csvExport').onclick=()=>{let c=calculated(),h=['Datum','Kilometerstand','Lademenge kWh','Kosten netto EUR','MwSt Prozent','MwSt Betrag EUR','Kosten brutto EUR','Preis EUR/kWh','Akku Beginn Prozent','Akku Ende Prozent','Ort','Ladeanbieter','Gefahrene km','kWh/100 km'],q=v=>'"'+String(v??'').replaceAll('"','""')+'"',dec=v=>v==null?'':Number(v).toFixed(2).replace('.',',');let rows=[h,...c.map(x=>[x.date,x.odo,dec(x.kwh),dec(x.net),x.vat,dec(x.gross-x.net),dec(x.gross),dec(x.gross/x.kwh),x.start,x.end,x.place,x.provider,x.dist??'',x.cons==null?'':dec(x.cons)])];download('E-Auto-Verbrauch.csv','\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
 $('backup').onclick=()=>download('E-Auto-Verbrauch-Backup.json',JSON.stringify({version:2,created:new Date().toISOString(),data},null,2),'application/json');
@@ -73,5 +83,17 @@ $('csvImport').onclick=()=>{importMode='csv';$('file').accept='.csv';$('file').c
 function parseCSV(text){let lines=text.replace(/^\ufeff/,'').split(/\r?\n/).filter(Boolean);if(lines.length<2)return[];function row(s){let out=[],cur='',q=false;for(let i=0;i<s.length;i++){let ch=s[i];if(ch=='"'){if(q&&s[i+1]=='"'){cur+='"';i++}else q=!q}else if(ch==';'&&!q){out.push(cur);cur=''}else cur+=ch}out.push(cur);return out}return lines.slice(1).map(row).map(r=>{let dec=x=>+(String(x).replace(',','.'))||0,g=dec(r[6]),vat=dec(r[4]);return{id:(crypto.randomUUID&&crypto.randomUUID())||String(Date.now()+Math.random()),date:r[0],odo:dec(r[1]),kwh:dec(r[2]),net:dec(r[3])||g/(1+vat/100),vat,gross:g,start:dec(r[8]),end:dec(r[9]),place:r[10]||'',provider:r[11]||''}}).filter(x=>x.date&&x.kwh)}
 $('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let t=await f.text();if(importMode==='json'){let b=JSON.parse(t);if(!Array.isArray(b.data))throw Error();if(confirm('Aktuelle Daten durch dieses Backup ersetzen?')){data=b.data;persist()}}else{let imported=parseCSV(t);if(!imported.length)throw Error();data.push(...imported);persist();alert(imported.length+' Ladevorgänge importiert.')}}catch{alert('Datei konnte nicht importiert werden.')}e.target.value=''}
 $('clear').onclick=()=>{if(confirm('Wirklich ALLE Ladevorgänge löschen?')){data=[];persist()}}
+
+document.querySelectorAll('.topnav button').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.topnav button').forEach(b=>b.classList.toggle('active',b===btn));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  $('page-'+btn.dataset.page).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+function goPage(name){
+  let b=document.querySelector('.topnav button[data-page="'+name+'"]');
+  if(b)b.click();
+}
+
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');render();calcNet();
 </script></body></html>
