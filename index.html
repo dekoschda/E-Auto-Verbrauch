@@ -8,28 +8,39 @@
 <title>E-Auto Verbrauch</title>
 <style>
 :root{font-family:system-ui,sans-serif;color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#171717;color:#f5f5f5}main{max-width:1180px;margin:auto;padding:18px}
-h1,h2{margin:.2em 0}.menubar{position:sticky;top:0;z-index:20;background:#171717;padding:10px 0 14px;display:flex;align-items:center;gap:12px}
-.menuwrap{position:relative}.hamburger{width:48px;height:48px;margin:0;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:#292929}
-.hamburger span{display:block;width:24px;height:3px;border-radius:3px;background:#f5f5f5}.menutitle{font-weight:700;font-size:1.05rem}
-.dropdown{display:none;position:absolute;top:54px;left:0;min-width:240px;background:#292929;border:1px solid #555;border-radius:12px;padding:7px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-.dropdown.open{display:block}.dropdown button{width:100%;margin:0;padding:12px;text-align:left;background:transparent;border:0}.dropdown button.active{background:#2563eb;color:#fff}.page{display:none}.page.active{display:block}.muted{color:#bdbdbd;font-size:.9rem}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card,.panel{background:#292929;border:1px solid #505050;border-radius:16px;padding:16px}.metric strong{font-size:1.55rem}
+h1,h2{margin:.2em 0}.menubar{position:sticky;top:0;z-index:30;background:#171717;padding:10px 0 14px;display:flex;align-items:center;gap:12px}
+.hamburger{width:48px;height:48px;margin:0;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:#292929;border:1px solid #666}
+.hamburger span{display:block;width:25px;height:3px;border-radius:3px;background:#f5f5f5;transition:transform .2s,opacity .2s}
+.hamburger.open span:nth-child(1){transform:translateY(8px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+.menutitle{font-weight:700;font-size:1.05rem}
+.menuoverlay{display:none;position:fixed;inset:0;z-index:39;background:rgba(0,0,0,.55)}
+.menuoverlay.open{display:block}
+.drawer{position:fixed;z-index:40;top:0;left:0;width:min(82vw,310px);height:100%;background:#242424;border-right:1px solid #555;transform:translateX(-105%);transition:transform .22s ease;padding:18px 12px}
+.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 18px;font-size:1.15rem;font-weight:750}
+.drawer-close{width:44px;height:44px;margin:0;font-size:1.5rem;padding:0}
+.drawer button.navitem{width:100%;margin:3px 0;padding:13px 14px;text-align:left;background:transparent;border:0;border-radius:9px}
+.drawer button.navitem.active{background:#2563eb;color:#fff}
+.page{display:none}.page.active{display:block}.muted{color:#bdbdbd;font-size:.9rem}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card,.panel{background:#292929;border:1px solid #505050;border-radius:16px;padding:16px}.metric strong{font-size:1.55rem}
 form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.9rem}input,select,button{width:100%;min-height:44px;margin-top:5px;border-radius:9px;border:1px solid #666;padding:9px;font:inherit}button{cursor:pointer;font-weight:650}.actions{display:flex;gap:9px;flex-wrap:wrap}.actions button{width:auto}.month{margin:17px 0}.month-head{display:flex;justify-content:space-between}.track{height:11px;background:#444;border-radius:20px;margin-top:8px}.bar{height:100%;background:#49aa55;border-radius:20px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1200px}th,td{padding:9px;border-bottom:1px solid #505050;text-align:left}.danger{border-color:#a55}.year{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #444}
 @media(max-width:780px){.grid,form}@media(max-width:440px){form,.grid{grid-template-columns:1fr}}
 </style></head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p class="muted">Ladevorgänge, Verbrauch und Kosten</p>
 <nav class="menubar">
-<div class="menuwrap">
-<button id="menuButton" class="hamburger" type="button" aria-label="Menü öffnen" aria-expanded="false">
+<button id="menuButton" class="hamburger" type="button" aria-label="Menü öffnen" aria-expanded="false" aria-controls="navDrawer">
 <span></span><span></span><span></span>
 </button>
-<div id="dropdownMenu" class="dropdown">
-<button type="button" data-page="overview" class="active">Gesamtübersicht</button>
-<button type="button" data-page="newcharge">Neuer Ladevorgang</button>
-<button type="button" data-page="history">Ladehistorie</button>
-</div>
-</div>
 <div id="menuTitle" class="menutitle">Gesamtübersicht</div>
 </nav>
+<div id="menuOverlay" class="menuoverlay" aria-hidden="true"></div>
+<aside id="navDrawer" class="drawer" aria-label="Hauptmenü">
+<div class="drawer-head"><span>Menü</span><button id="menuClose" class="drawer-close" type="button" aria-label="Menü schließen">×</button></div>
+<button type="button" class="navitem active" data-page="overview">Gesamtübersicht</button>
+<button type="button" class="navitem" data-page="newcharge">Neuer Ladevorgang</button>
+<button type="button" class="navitem" data-page="history">Ladehistorie</button>
+</aside>
 
 <div id="page-overview" class="page active">
 <section class="grid">
@@ -96,29 +107,29 @@ function parseCSV(text){let lines=text.replace(/^\ufeff/,'').split(/\r?\n/).filt
 $('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let t=await f.text();if(importMode==='json'){let b=JSON.parse(t);if(!Array.isArray(b.data))throw Error();if(confirm('Aktuelle Daten durch dieses Backup ersetzen?')){data=b.data;persist()}}else{let imported=parseCSV(t);if(!imported.length)throw Error();data.push(...imported);persist();alert(imported.length+' Ladevorgänge importiert.')}}catch{alert('Datei konnte nicht importiert werden.')}e.target.value=''}
 $('clear').onclick=()=>{if(confirm('Wirklich ALLE Ladevorgänge löschen?')){data=[];persist()}}
 
-const menuButton=$('menuButton'), dropdownMenu=$('dropdownMenu'), menuTitle=$('menuTitle');
+const menuButton=$('menuButton'), navDrawer=$('navDrawer'), menuOverlay=$('menuOverlay'), menuClose=$('menuClose'), menuTitle=$('menuTitle');
 const pageNames={overview:'Gesamtübersicht',newcharge:'Neuer Ladevorgang',history:'Ladehistorie'};
-menuButton.addEventListener('click',()=>{
-  const open=dropdownMenu.classList.toggle('open');
+function setMenu(open){
+  navDrawer.classList.toggle('open',open);
+  menuOverlay.classList.toggle('open',open);
+  menuButton.classList.toggle('open',open);
   menuButton.setAttribute('aria-expanded',String(open));
-});
-document.querySelectorAll('#dropdownMenu button[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('#dropdownMenu button[data-page]').forEach(b=>b.classList.toggle('active',b===btn));
+  menuOverlay.setAttribute('aria-hidden',String(!open));
+}
+menuButton.addEventListener('click',()=>setMenu(!navDrawer.classList.contains('open')));
+menuClose.addEventListener('click',()=>setMenu(false));
+menuOverlay.addEventListener('click',()=>setMenu(false));
+document.querySelectorAll('#navDrawer .navitem[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('#navDrawer .navitem[data-page]').forEach(b=>b.classList.toggle('active',b===btn));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   $('page-'+btn.dataset.page).classList.add('active');
   menuTitle.textContent=pageNames[btn.dataset.page];
-  dropdownMenu.classList.remove('open');
-  menuButton.setAttribute('aria-expanded','false');
+  setMenu(false);
   window.scrollTo({top:0,behavior:'smooth'});
 }));
-document.addEventListener('click',e=>{
-  if(!e.target.closest('.menuwrap')){
-    dropdownMenu.classList.remove('open');
-    menuButton.setAttribute('aria-expanded','false');
-  }
-});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
 function goPage(name){
-  let b=document.querySelector('#dropdownMenu button[data-page="'+name+'"]');
+  const b=document.querySelector('#navDrawer .navitem[data-page="'+name+'"]');
   if(b)b.click();
 }
 

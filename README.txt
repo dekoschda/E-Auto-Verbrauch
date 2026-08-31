@@ -1,11 +1,12 @@
-E-Auto Verbrauch – PWA Version 5
+E-Auto Verbrauch – Menü-Update
 
-Änderung:
-- Navigation als Android-ähnliches Hamburger-Menü (☰ / drei Striche).
-- Tippen auf das Symbol öffnet ein Dropdown-Menü.
-- Menüpunkte: Gesamtübersicht, Neuer Ladevorgang, Ladehistorie.
-- Das Dropdown schließt nach Auswahl oder beim Tippen außerhalb automatisch.
-- Der aktuell gewählte Bereich wird neben dem Menü angezeigt.
+Das Menü wurde neu umgesetzt:
+- Android-typisches Hamburger-Symbol mit drei horizontalen Strichen oben links.
+- Tippen öffnet ein seitlich von links einschiebendes Menü.
+- Hintergrund wird währenddessen abgedunkelt.
+- Menü enthält Gesamtübersicht, Neuer Ladevorgang und Ladehistorie.
+- Auswahl, X, Tippen außerhalb oder Escape schließen das Menü.
+- Das Hamburger-Symbol verwandelt sich beim Öffnen in ein X.
 
-Update:
-Dateien entpacken und die bisherigen Dateien im GitHub-Pages-Repository ersetzen.
+Für GitHub Pages alle Dateien aus diesem ZIP über die vorhandenen Dateien hochladen.
+Der Service-Worker hat einen neuen Cache-Namen, damit die aktualisierte Oberfläche geladen wird.
