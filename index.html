@@ -8,41 +8,35 @@
 <title>E-Auto Verbrauch</title>
 <style>
 :root{font-family:system-ui,sans-serif;color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#171717;color:#f5f5f5}main{max-width:1180px;margin:auto;padding:18px}
-h1,h2{margin:.2em 0}.menubar{position:sticky;top:0;z-index:30;background:#171717;padding:10px 0 14px;display:flex;align-items:center;gap:12px}
-.hamburger{width:48px;height:48px;margin:0;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:#292929;border:1px solid #666}
-.hamburger span{display:block;width:25px;height:3px;border-radius:3px;background:#f5f5f5;transition:transform .2s,opacity .2s}
-.hamburger.open span:nth-child(1){transform:translateY(8px) rotate(45deg)}
-.hamburger.open span:nth-child(2){opacity:0}
-.hamburger.open span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
-.menutitle{font-weight:700;font-size:1.05rem}
-.menuoverlay{display:none;position:fixed;inset:0;z-index:39;background:rgba(0,0,0,.55)}
-.menuoverlay.open{display:block}
-.drawer{position:fixed;z-index:40;top:0;left:0;width:min(82vw,310px);height:100%;background:#242424;border-right:1px solid #555;transform:translateX(-105%);transition:transform .22s ease;padding:18px 12px}
-.drawer.open{transform:translateX(0)}
-.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 18px;font-size:1.15rem;font-weight:750}
-.drawer-close{width:44px;height:44px;margin:0;font-size:1.5rem;padding:0}
-.drawer button.navitem{width:100%;margin:3px 0;padding:13px 14px;text-align:left;background:transparent;border:0;border-radius:9px}
-.drawer button.navitem.active{background:#2563eb;color:#fff}
-.page{display:none}.page.active{display:block}.muted{color:#bdbdbd;font-size:.9rem}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card,.panel{background:#292929;border:1px solid #505050;border-radius:16px;padding:16px}.metric strong{font-size:1.55rem}
+h1,h2{margin:.2em 0}.page{display:none;padding-bottom:92px}.page.active{display:block}
+.dock{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:50;width:min(calc(100% - 28px),520px);display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:7px;background:#292929;border:1px solid #555;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.dock button{margin:0;min-height:60px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:5px;color:#bbb}
+.dock button.active{background:#2563eb;color:#fff}.dock svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.dock small{font-size:.72rem}
+.history-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.charge-card{background:#292929;border:1px solid #505050;border-radius:16px;padding:15px;min-width:0}.charge-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.charge-date{font-weight:750;font-size:1.05rem}.charge-cost{font-weight:750;font-size:1.1rem;text-align:right}.charge-main{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.charge-stat{background:#333;border-radius:10px;padding:9px;min-width:0}.charge-stat small{display:block;color:#bbb;margin-bottom:3px}.charge-stat strong{overflow-wrap:anywhere}.charge-meta{display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:.9rem;color:#ccc}.charge-actions{display:flex;gap:7px;margin-top:13px}.charge-actions button{width:auto;margin:0;min-height:40px;padding:7px 11px}
+@media(max-width:680px){.history-cards{grid-template-columns:1fr}.charge-main{grid-template-columns:repeat(3,minmax(0,1fr))}}.muted{color:#bdbdbd;font-size:.9rem}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card,.panel{background:#292929;border:1px solid #505050;border-radius:16px;padding:16px}.metric strong{font-size:1.55rem}
 form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.9rem}input,select,button{width:100%;min-height:44px;margin-top:5px;border-radius:9px;border:1px solid #666;padding:9px;font:inherit}button{cursor:pointer;font-weight:650}.actions{display:flex;gap:9px;flex-wrap:wrap}.actions button{width:auto}.month{margin:17px 0}.month-head{display:flex;justify-content:space-between}.track{height:11px;background:#444;border-radius:20px;margin-top:8px}.bar{height:100%;background:#49aa55;border-radius:20px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1200px}th,td{padding:9px;border-bottom:1px solid #505050;text-align:left}.danger{border-color:#a55}.year{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #444}
 @media(max-width:780px){.grid,form}@media(max-width:440px){form,.grid{grid-template-columns:1fr}}
 </style></head>
-<body><main><h1>⚡ E-Auto Verbrauch</h1><p class="muted">Ladevorgänge, Verbrauch und Kosten</p>
-<nav class="menubar">
-<button id="menuButton" class="hamburger" type="button" aria-label="Menü öffnen" aria-expanded="false" aria-controls="navDrawer">
-<span></span><span></span><span></span>
-</button>
-<div id="menuTitle" class="menutitle">Gesamtübersicht</div>
-</nav>
-<div id="menuOverlay" class="menuoverlay" aria-hidden="true"></div>
-<aside id="navDrawer" class="drawer" aria-label="Hauptmenü">
-<div class="drawer-head"><span>Menü</span><button id="menuClose" class="drawer-close" type="button" aria-label="Menü schließen">×</button></div>
-<button type="button" class="navitem active" data-page="overview">Gesamtübersicht</button>
-<button type="button" class="navitem" data-page="newcharge">Neuer Ladevorgang</button>
-<button type="button" class="navitem" data-page="history">Ladehistorie</button>
-</aside>
+<body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
-<div id="page-overview" class="page active">
+
+<div id="page-history" class="page active"><section class="panel">
+<div class="actions"><button id="clear" class="danger">Alle Daten löschen</button></div>
+<h2>Ladehistorie</h2>
+<p class="muted">Jeder Ladevorgang wird als eigene Kachel angezeigt.</p>
+<div id="historyCards" class="history-cards"></div>
+</section></div>
+<div id="page-newcharge" class="page">
+<section class="panel"><h2 id="formTitle">Neuen Ladevorgang erfassen</h2>
+<form id="form">
+<label>Datum<input id="date" type="date" required></label><label>Kilometerstand<input id="odo" type="number" min="0" required></label>
+<label>Lademenge (kWh)<input id="kwh" type="number" min=".01" step=".01" required></label><label>Kosten brutto (€)<input id="gross" type="number" min="0" step=".01" required></label>
+<label>MwSt.<select id="vat"><option value="19">19 %</option><option value="7">7 %</option><option value="0">0 %</option></select></label>
+<label>Kosten netto<input id="netPreview" readonly></label><label>Akku Beginn (%)<input id="start" type="number" min="0" max="100" required></label>
+<label>Akku Ende (%)<input id="end" type="number" min="0" max="100" required></label><label>Ort<input id="place" required></label><label>Ladeanbieter<input id="provider" required></label>
+</form><div class="actions"><button id="save">Speichern</button><button id="cancelEdit" hidden>Bearbeiten abbrechen</button><span id="msg" class="muted"></span></div></section>
+</div>
+<div id="page-overview" class="page">
 <section class="grid">
 <div class="card metric" id="t1">Ø Verbrauch<br><strong id="avg">–</strong><br><small>kWh/100 km</small></div>
 <div class="card metric" id="t2">Kosten brutto<br><strong id="grossTotal">0,00 €</strong><br><small>gesamt</small></div>
@@ -57,22 +51,11 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung für Handywechsel/Wiederherstellung.</p>
 <div class="actions"><button id="csvExport">CSV exportieren</button><button id="csvImport">CSV importieren</button><button id="backup">Backup (.json)</button><button id="restore">Backup wiederherstellen</button><input id="file" type="file" accept=".csv,.json" hidden></div></section>
 </div>
-
-<div id="page-newcharge" class="page">
-<section class="panel"><h2 id="formTitle">Neuen Ladevorgang erfassen</h2>
-<form id="form">
-<label>Datum<input id="date" type="date" required></label><label>Kilometerstand<input id="odo" type="number" min="0" required></label>
-<label>Lademenge (kWh)<input id="kwh" type="number" min=".01" step=".01" required></label><label>Kosten brutto (€)<input id="gross" type="number" min="0" step=".01" required></label>
-<label>MwSt.<select id="vat"><option value="19">19 %</option><option value="7">7 %</option><option value="0">0 %</option></select></label>
-<label>Kosten netto<input id="netPreview" readonly></label><label>Akku Beginn (%)<input id="start" type="number" min="0" max="100" required></label>
-<label>Akku Ende (%)<input id="end" type="number" min="0" max="100" required></label><label>Ort<input id="place" required></label><label>Ladeanbieter<input id="provider" required></label>
-</form><div class="actions"><button id="save">Speichern</button><button id="cancelEdit" hidden>Bearbeiten abbrechen</button><span id="msg" class="muted"></span></div></section>
-</div>
-
-<div id="page-history" class="page">
-<section class="panel"><div class="actions"><button id="clear" class="danger">Alle Daten löschen</button></div><h2>Ladehistorie</h2>
-<div class="table-wrap"><table><thead><tr><th>Datum</th><th>km</th><th>kWh</th><th>Netto</th><th>MwSt.</th><th>Brutto</th><th>€/kWh</th><th>Akku</th><th>Ort</th><th>Anbieter</th><th>Kilometer seit letzter Fahrt</th><th>kWh/100 km</th><th>Aktion</th></tr></thead><tbody id="hist"></tbody></table></div></section>
-</div>
+<nav class="dock" aria-label="Seitennavigation">
+<button type="button" class="active" data-page="history" aria-label="Ladehistorie"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="18" cy="18" r="2"/></svg><small>Historie</small></button>
+<button type="button" data-page="newcharge" aria-label="Neuer Ladevorgang"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><small>Neu</small></button>
+<button type="button" data-page="overview" aria-label="Übersicht"><svg viewBox="0 0 24 24"><rect x="4" y="12" width="3" height="7"/><rect x="10.5" y="8" width="3" height="11"/><rect x="17" y="4" width="3" height="15"/></svg><small>Übersicht</small></button>
+</nav>
 <script>
 const $=x=>document.getElementById(x), euro=n=>Number(n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}), num=(n,d=1)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
 const KEY='ev-charges-v2'; let data=JSON.parse(localStorage.getItem(KEY)||'[]'), editId=null, importMode=null;
@@ -92,11 +75,16 @@ let m={};data.forEach(x=>m[x.date.slice(0,7)]=(m[x.date.slice(0,7)]||0)+x.gross)
 $('months').innerHTML=me.length?me.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric'}).format(new Date(Date.UTC(y,mo-1,1)));return `<div class="month"><div class="month-head"><span>${lab}</span><strong>${euro(v)}</strong></div><div class="track"><div class="bar" style="width:${Math.max(1,v/mx*100)}%"></div></div></div>`}).join(''):'Noch keine Daten.';
 let ys={};data.forEach(x=>{let y=x.date.slice(0,4);if(!ys[y])ys[y]={gross:0,net:0,kwh:0,count:0};ys[y].gross+=x.gross;ys[y].net+=x.net;ys[y].kwh+=x.kwh;ys[y].count++});
 $('years').innerHTML=Object.keys(ys).length?Object.entries(ys).sort((a,b)=>b[0].localeCompare(a[0])).map(([y,v])=>`<div class="year"><span><strong>${y}</strong><br><small>${v.count} Ladevorgänge · ${num(v.kwh)} kWh</small></span><span style="text-align:right">${euro(v.gross)}<br><small>netto ${euro(v.net)}</small></span></div>`).join(''):'Noch keine Daten.';
-$('hist').innerHTML=[...c].reverse().map(x=>`<tr><td>${x.date.split('-').reverse().join('.')}</td><td>${num(x.odo,0)}</td><td>${num(x.kwh,2)}</td><td>${euro(x.net)}</td><td>${x.vat}%</td><td>${euro(x.gross)}</td><td>${euro(x.gross/x.kwh)}</td><td>${x.start} → ${x.end}%</td><td>${esc(x.place)}</td><td>${esc(x.provider)}</td><td>${x.dist?num(x.dist,0):'–'}</td><td>${x.cons?num(x.cons):'–'}</td><td><button onclick="editEntry('${x.id}')">Bearbeiten</button> <button onclick="delEntry('${x.id}')">Löschen</button></td></tr>`).join('');
+$('historyCards').innerHTML=[...c].reverse().map(x=>`<article class="charge-card">
+<div class="charge-top"><div><div class="charge-date">${x.date.split('-').reverse().join('.')}</div><small class="muted">${esc(x.place)||'Kein Ladeort'} · ${esc(x.provider)||'Kein Anbieter'}</small></div><div class="charge-cost">${euro(x.gross)}<br><small class="muted">${euro(x.gross/x.kwh)}/kWh</small></div></div>
+<div class="charge-main"><div class="charge-stat"><small>Geladen</small><strong>${num(x.kwh,2)} kWh</strong></div><div class="charge-stat"><small>Kilometer</small><strong>${num(x.odo,0)}</strong></div><div class="charge-stat"><small>Verbrauch</small><strong>${x.cons?num(x.cons)+' kWh/100':'–'}</strong></div></div>
+<div class="charge-meta"><span>Akku: ${x.start} → ${x.end}%</span><span>Seit letzter Fahrt: ${x.dist?num(x.dist,0)+' km':'–'}</span><span>Netto: ${euro(x.net)}</span><span>MwSt.: ${x.vat}%</span></div>
+<div class="charge-actions"><button type="button" onclick="editEntry('${x.id}')">Bearbeiten</button><button type="button" onclick="delEntry('${x.id}')">Löschen</button></div>
+</article>`).join('') || '<p class="muted">Noch keine Ladevorgänge vorhanden.</p>';
 }
 function resetForm(){editId=null;$('form').reset();$('vat').value='19';$('date').value=new Date().toISOString().slice(0,10);$('formTitle').textContent='Neuen Ladevorgang erfassen';$('cancelEdit').hidden=true;calcNet()}
 window.delEntry=id=>{if(confirm('Diesen Ladevorgang löschen?')){data=data.filter(x=>x.id!==id);persist()}}
-window.editEntry=id=>{let x=data.find(x=>x.id===id);if(!x)return;editId=id;['date','odo','kwh','gross','vat','start','end','place','provider'].forEach(k=>$(k).value=x[k]);$('formTitle').textContent='Ladevorgang bearbeiten';$('cancelEdit').hidden=false;calcNet();scrollTo({top:$('formTitle').offsetTop-20,behavior:'smooth'})}
+window.editEntry=id=>{let x=data.find(x=>x.id===id);if(!x)return;editId=id;['date','odo','kwh','gross','vat','start','end','place','provider'].forEach(k=>$(k).value=x[k]);$('formTitle').textContent='Ladevorgang bearbeiten';$('cancelEdit').hidden=false;calcNet();goPage('newcharge')}
 $('cancelEdit').onclick=resetForm;
 $('save').onclick=()=>{if(!$('form').reportValidity())return;let start=+$('start').value,end=+$('end').value;if(end<start){$('msg').textContent='Akku-Endstand muss größer sein.';return}let gross=+$('gross').value,vat=+$('vat').value,obj={id:editId||((crypto.randomUUID&&crypto.randomUUID())||String(Date.now())),date:$('date').value,odo:+$('odo').value,kwh:+$('kwh').value,gross,vat,net:gross/(1+vat/100),start,end,place:$('place').value.trim(),provider:$('provider').value.trim()};if(editId)data[data.findIndex(x=>x.id===editId)]=obj;else data.push(obj);persist();$('msg').textContent=editId?'Änderung gespeichert.':'Gespeichert.';resetForm();goPage('history')}
 function download(name,text,type){let b=new Blob([text],{type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
@@ -107,29 +95,16 @@ function parseCSV(text){let lines=text.replace(/^\ufeff/,'').split(/\r?\n/).filt
 $('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let t=await f.text();if(importMode==='json'){let b=JSON.parse(t);if(!Array.isArray(b.data))throw Error();if(confirm('Aktuelle Daten durch dieses Backup ersetzen?')){data=b.data;persist()}}else{let imported=parseCSV(t);if(!imported.length)throw Error();data.push(...imported);persist();alert(imported.length+' Ladevorgänge importiert.')}}catch{alert('Datei konnte nicht importiert werden.')}e.target.value=''}
 $('clear').onclick=()=>{if(confirm('Wirklich ALLE Ladevorgänge löschen?')){data=[];persist()}}
 
-const menuButton=$('menuButton'), navDrawer=$('navDrawer'), menuOverlay=$('menuOverlay'), menuClose=$('menuClose'), menuTitle=$('menuTitle');
-const pageNames={overview:'Gesamtübersicht',newcharge:'Neuer Ladevorgang',history:'Ladehistorie'};
-function setMenu(open){
-  navDrawer.classList.toggle('open',open);
-  menuOverlay.classList.toggle('open',open);
-  menuButton.classList.toggle('open',open);
-  menuButton.setAttribute('aria-expanded',String(open));
-  menuOverlay.setAttribute('aria-hidden',String(!open));
-}
-menuButton.addEventListener('click',()=>setMenu(!navDrawer.classList.contains('open')));
-menuClose.addEventListener('click',()=>setMenu(false));
-menuOverlay.addEventListener('click',()=>setMenu(false));
-document.querySelectorAll('#navDrawer .navitem[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('#navDrawer .navitem[data-page]').forEach(b=>b.classList.toggle('active',b===btn));
+const pageNames={history:'Ladehistorie',newcharge:'Neuer Ladevorgang',overview:'Gesamtübersicht'};
+document.querySelectorAll('.dock button[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.dock button[data-page]').forEach(b=>b.classList.toggle('active',b===btn));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   $('page-'+btn.dataset.page).classList.add('active');
-  menuTitle.textContent=pageNames[btn.dataset.page];
-  setMenu(false);
+  $('pageSubtitle').textContent=pageNames[btn.dataset.page];
   window.scrollTo({top:0,behavior:'smooth'});
 }));
-document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
 function goPage(name){
-  const b=document.querySelector('#navDrawer .navitem[data-page="'+name+'"]');
+  const b=document.querySelector('.dock button[data-page="'+name+'"]');
   if(b)b.click();
 }
 

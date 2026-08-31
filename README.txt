@@ -1,12 +1,15 @@
-E-Auto Verbrauch – Menü-Update
+E-Auto Verbrauch – PWA Version 7
 
-Das Menü wurde neu umgesetzt:
-- Android-typisches Hamburger-Symbol mit drei horizontalen Strichen oben links.
-- Tippen öffnet ein seitlich von links einschiebendes Menü.
-- Hintergrund wird währenddessen abgedunkelt.
-- Menü enthält Gesamtübersicht, Neuer Ladevorgang und Ladehistorie.
-- Auswahl, X, Tippen außerhalb oder Escape schließen das Menü.
-- Das Hamburger-Symbol verwandelt sich beim Öffnen in ein X.
+Navigation:
+- Kein Menü mehr.
+- Festes Dock unten mit drei Icons.
+- Seite 1: Ladehistorie.
+- Seite 2: Neuer Ladevorgang.
+- Seite 3: Gesamtübersicht.
 
-Für GitHub Pages alle Dateien aus diesem ZIP über die vorhandenen Dateien hochladen.
-Der Service-Worker hat einen neuen Cache-Namen, damit die aktualisierte Oberfläche geladen wird.
+Ladehistorie:
+Jeder Ladevorgang ist eine eigene Kachel mit Datum, Ladeort, Anbieter, Kosten,
+Preis/kWh, Lademenge, Kilometerstand, Verbrauch, Akkustand, Kilometer seit
+letzter Fahrt, Netto und MwSt. Bearbeiten und Löschen sind direkt möglich.
+
+Nach dem Speichern öffnet sich die Historie. Beim Bearbeiten öffnet sich die Eingabeseite.
