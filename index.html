@@ -64,7 +64,7 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 .vehicle-hero h2{margin-bottom:2px}
 .dock{grid-template-columns:repeat(4,1fr)!important}
 @media(min-width:700px){.vehicle-specs{grid-template-columns:repeat(3,minmax(0,1fr))}}
-</style></head>
+ .history-cards{grid-template-columns:1fr!important}</style></head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
 
@@ -123,15 +123,7 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <div class="spec"><small>Anhängelast</small><strong>750 kg</strong></div>
 </div>
 </section>
-<section class="panel">
-<h2>Eigene Fahrzeugdaten</h2>
-<div class="grid">
-<label>Fahrzeugname<input id="vehicleName" type="text" value="MG S5 EV Luxury Long Range"></label>
-<label>Nutzbare Akkukapazität<input id="batteryCapacity" type="number" min="1" step="0.1" value="62.1"></label>
-</div>
-<div class="actions"><button id="saveVehicle" type="button">Speichern</button><span id="vehicleMsg" class="muted"></span></div>
-<p class="muted">Die Fahrzeugdaten sind separat gespeichert und können später für weitere Auswertungen verwendet werden. Der aktuelle Verbrauch bleibt unbereinigt und basiert auf den tatsächlich geladenen kWh.</p>
-</section>
+
 </div>
 <nav class="dock" aria-label="Seitennavigation">
 <button type="button" class="active" data-page="history" aria-label="Ladehistorie"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="18" cy="18" r="2"/></svg><small>Historie</small></button>
@@ -142,8 +134,6 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <script>
 const $=x=>document.getElementById(x), euro=n=>Number(n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}), num=(n,d=1)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
 const KEY='ev-charges-v2'
-const VEHICLE_KEY='ev-vehicle-v2';
-let vehicle=JSON.parse(localStorage.getItem(VEHICLE_KEY)||'null')||{name:'MG S5 EV Luxury Long Range',capacity:62.1};
 
 let monthlyCostMode='gross';
 
@@ -243,13 +233,5 @@ $('costModeBtn').addEventListener('click',()=>{
  render();
 });
 
-$('vehicleName').value=vehicle.name||'MG S5 EV Luxury Long Range';
-$('batteryCapacity').value=vehicle.capacity||62.1;
-$('saveVehicle').addEventListener('click',()=>{
- const name=$('vehicleName').value.trim(),cap=Number($('batteryCapacity').value);
- if(!name||!Number.isFinite(cap)||cap<=0){$('vehicleMsg').textContent='Bitte gültige Fahrzeugdaten eingeben.';return}
- vehicle={name,capacity:cap};localStorage.setItem(VEHICLE_KEY,JSON.stringify(vehicle));
- $('vehicleMsg').textContent='Gespeichert.';setTimeout(()=>{$('vehicleMsg').textContent=''},1600);
-});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');render();calcNet();
 </script></body></html>
