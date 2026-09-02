@@ -210,8 +210,97 @@ function download(name,text,type){let b=new Blob([text],{type}),a=document.creat
 $('csvExport').onclick=()=>{let c=calculated(),h=['Datum','Kilometerstand','Lademenge kWh','Kosten netto EUR','MwSt Prozent','MwSt Betrag EUR','Kosten brutto EUR','Preis EUR/kWh','Akku Beginn Prozent','Akku Ende Prozent','Ort','Ladeanbieter','Gefahrene km','kWh/100 km'],q=v=>'"'+String(v??'').replaceAll('"','""')+'"',dec=v=>v==null?'':Number(v).toFixed(2).replace('.',',');let rows=[h,...c.map(x=>[x.date,x.odo,dec(x.kwh),dec(x.net),x.vat,dec(x.gross-x.net),dec(x.gross),dec(x.gross/x.kwh),x.start,x.end,x.place,x.provider,x.dist??'',x.cons==null?'':dec(x.cons)])];download('E-Auto-Verbrauch.csv','\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
 $('backup').onclick=()=>download('E-Auto-Verbrauch-Backup.json',JSON.stringify({version:2,created:new Date().toISOString(),data},null,2),'application/json');
 $('csvImport').onclick=()=>{importMode='csv';$('file').accept='.csv';$('file').click()};$('restore').onclick=()=>{importMode='json';$('file').accept='.json';$('file').click()};
-function parseCSV(text){let lines=text.replace(/^\ufeff/,'').split(/\r?\n/).filter(Boolean);if(lines.length<2)return[];function row(s){let out=[],cur='',q=false;for(let i=0;i<s.length;i++){let ch=s[i];if(ch=='"'){if(q&&s[i+1]=='"'){cur+='"';i++}else q=!q}else if(ch==';'&&!q){out.push(cur);cur=''}else cur+=ch}out.push(cur);return out}return lines.slice(1).map(row).map(r=>{let dec=x=>+(String(x).replace(',','.'))||0,g=dec(r[6]),vat=dec(r[4]);return{id:(crypto.randomUUID&&crypto.randomUUID())||String(Date.now()+Math.random()),date:r[0],odo:dec(r[1]),kwh:dec(r[2]),net:dec(r[3])||g/(1+vat/100),vat,gross:g,start:dec(r[8]),end:dec(r[9]),place:r[10]||'',provider:r[11]||''}}).filter(x=>x.date&&x.kwh)}
-$('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let t=await f.text();if(importMode==='json'){let b=JSON.parse(t);if(!Array.isArray(b.data))throw Error();if(confirm('Aktuelle Daten durch dieses Backup ersetzen?')){data=b.data;persist()}}else{let imported=parseCSV(t);if(!imported.length)throw Error();data.push(...imported);persist();alert(imported.length+' Ladevorgänge importiert.')}}catch{alert('Datei konnte nicht importiert werden.')}e.target.value=''}
+function parseCSV(text){
+  text=String(text||'').replace(/^\ufeff/,'').trim();
+  if(!text)return[];
+
+  const firstLine=(text.split(/\r?\n/,1)[0]||'');
+  const delimiter=(firstLine.match(/;/g)||[]).length >= (firstLine.match(/,/g)||[]).length ? ';' : ',';
+
+  function parseRow(s){
+    let out=[],cur='',quoted=false;
+    for(let i=0;i<s.length;i++){
+      const ch=s[i];
+      if(ch==='"'){
+        if(quoted&&s[i+1]==='"'){cur+='"';i++}
+        else quoted=!quoted;
+      }else if(ch===delimiter&&!quoted){out.push(cur.trim());cur=''}
+      else cur+=ch;
+    }
+    out.push(cur.trim());
+    return out;
+  }
+  function norm(s){return String(s||'').trim().toLowerCase().replace(/[ä]/g,'ae').replace(/[ö]/g,'oe').replace(/[ü]/g,'ue').replace(/[ß]/g,'ss').replace(/[^a-z0-9]/g,'')}
+  function dec(v){
+    let s=String(v??'').trim().replace(/[€%\s]/g,'');
+    if(!s)return 0;
+    if(s.includes(',')&&s.includes('.')){
+      if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.');
+      else s=s.replace(/,/g,'');
+    }else if(s.includes(',')) s=s.replace(',','.');
+    const n=Number(s); return Number.isFinite(n)?n:0;
+  }
+  function date(v){
+    let s=String(v||'').trim();
+    let m=s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+    if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    m=s.match(/^(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})$/);
+    if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+    return s;
+  }
+
+  const lines=text.split(/\r?\n/).filter(x=>x.trim());
+  if(lines.length<2)return[];
+  const headers=parseRow(lines[0]), map={};
+  headers.forEach((h,i)=>map[norm(h)]=i);
+  const idx=(...names)=>{
+    for(const name of names){const k=norm(name);if(Object.prototype.hasOwnProperty.call(map,k))return map[k]}
+    return -1;
+  };
+  const I={
+    date:idx('Datum','Date'), odo:idx('Kilometerstand','km Stand','Odometer'),
+    kwh:idx('Lademenge kWh','Lademenge','kWh'), net:idx('Kosten netto EUR','Kosten netto','Netto'),
+    vat:idx('MwSt Prozent','MwSt','USt Prozent'), gross:idx('Kosten brutto EUR','Kosten brutto','Brutto','Kosten'),
+    start:idx('Akku Beginn Prozent','Akku Beginn','SOC Beginn'), end:idx('Akku Ende Prozent','Akku Ende','SOC Ende'),
+    place:idx('Ort','Ladeort'), provider:idx('Ladeanbieter','Anbieter')
+  };
+  if(I.date<0||I.odo<0||I.kwh<0) throw new Error('Pflichtspalten Datum, Kilometerstand oder Lademenge fehlen.');
+
+  return lines.slice(1).map(parseRow).map(r=>{
+    const gross=I.gross>=0?dec(r[I.gross]):0, vat=I.vat>=0?dec(r[I.vat]):19;
+    const net=I.net>=0&&String(r[I.net]||'').trim()?dec(r[I.net]):gross/(1+vat/100);
+    return {
+      id:(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()+Math.random()),
+      date:date(r[I.date]), odo:dec(r[I.odo]), kwh:dec(r[I.kwh]), net, vat, gross,
+      start:I.start>=0?dec(r[I.start]):0, end:I.end>=0?dec(r[I.end]):0,
+      place:I.place>=0?(r[I.place]||''):'', provider:I.provider>=0?(r[I.provider]||''):''
+    };
+  }).filter(x=>x.date&&x.kwh>0);
+}
+$('file').onchange=async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  try{
+    const t=await f.text();
+    if(importMode==='json'){
+      const b=JSON.parse(t);
+      if(!Array.isArray(b.data))throw new Error('Ungültiges Backup.');
+      if(confirm('Aktuelle Daten durch dieses Backup ersetzen?')){data=b.data;learnProviders();persist()}
+    }else{
+      const imported=parseCSV(t);
+      if(!imported.length)throw new Error('Keine gültigen Ladevorgänge gefunden.');
+      const before=data.length;
+      const sig=x=>[x.date,Number(x.odo),Number(x.kwh).toFixed(3),Number(x.gross).toFixed(2)].join('|');
+      const existing=new Set(data.map(sig));
+      const fresh=imported.filter(x=>!existing.has(sig(x)));
+      data.push(...fresh); learnProviders(); persist();
+      alert(fresh.length+' Ladevorgänge importiert.'+(imported.length-fresh.length?' '+(imported.length-fresh.length)+' Duplikate übersprungen.':''));
+    }
+  }catch(err){
+    console.error(err);
+    alert('CSV-Import fehlgeschlagen: '+(err&&err.message?err.message:'Datei konnte nicht gelesen werden.'));
+  }
+  e.target.value='';
+}
 $('clear').onclick=()=>{if(confirm('Wirklich ALLE Ladevorgänge löschen?')){data=[];persist()}}
 
 const pageNames={history:'Ladehistorie',newcharge:'Neuer Ladevorgang',overview:'Gesamtübersicht',vehicle:'Fahrzeugdaten'};
