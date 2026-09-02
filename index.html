@@ -258,7 +258,6 @@ $('historyCards').innerHTML=yearSections.join('')||'<p class="muted">Für diesen
 if(c.length!==validHistory.length){
  $('dataStatus').textContent+=' '+(c.length-validHistory.length)+' Einträge haben ein ungültiges Datum und wurden ausgeblendet.';
 }
-}).join('') || '<p class="muted">Für diesen Filter sind keine Ladevorgänge vorhanden.</p>';
 }
 $('historyYear').addEventListener('change',render);
 $('historyMonth').addEventListener('change',render);
