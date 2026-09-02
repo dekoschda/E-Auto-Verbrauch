@@ -154,11 +154,26 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 const $=x=>document.getElementById(x), euro=n=>Number(n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}), num=(n,d=1)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
 const KEY='ev-charges-v2'
 
+// Dock bewusst sehr frueh aktivieren: Navigation bleibt auch bei fehlerhaften Alt-Daten benutzbar.
+const pageNames={history:'Ladehistorie',newcharge:'Neuer Ladevorgang',overview:'Gesamtübersicht',vehicle:'Fahrzeugdaten'};
+function activatePage(name){
+  document.querySelectorAll('.dock button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
+  document.querySelectorAll('.page').forEach(pg=>pg.classList.toggle('active',pg.id==='page-'+name));
+  const sub=document.getElementById('pageSubtitle'); if(sub) sub.textContent=pageNames[name]||'';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.dock button[data-page]').forEach(btn=>{btn.onclick=()=>activatePage(btn.dataset.page)});
+function goPage(name){activatePage(name)}
+
 let monthlyCostMode='gross';
 
 const PROVIDER_KEY='ev-providers-v1';
 const DEFAULT_PROVIDERS=['EWE Go','Aldi Süd','Büro'];
-let providers=JSON.parse(localStorage.getItem(PROVIDER_KEY)||'null')||[...DEFAULT_PROVIDERS];
+let providers=[...DEFAULT_PROVIDERS];
+try{
+  const savedProviders=JSON.parse(localStorage.getItem(PROVIDER_KEY)||'null');
+  if(Array.isArray(savedProviders)) providers=savedProviders.filter(x=>typeof x==='string'&&x.trim());
+}catch(err){console.warn('Ladeanbieter konnten nicht gelesen werden:',err)}
 function saveProviders(){localStorage.setItem(PROVIDER_KEY,JSON.stringify(providers))}
 function renderProviders(selected=''){
  const sel=$('provider'),current=selected||sel.value;
@@ -200,7 +215,7 @@ function calcNet(){let g=+$('gross').value||0,v=+$('vat').value,n=g/(1+v/100);$(
 
 function esc(s){let d=document.createElement('div');d.textContent=s??'';return d.innerHTML}
 function calculated(){
- let s=[...data].sort((a,b)=>a.date.localeCompare(b.date)||a.odo-b.odo);
+ let s=[...data].filter(x=>x&&typeof x.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)).sort((a,b)=>a.date.localeCompare(b.date)||a.odo-b.odo);
  return s.map((x,i)=>{
    let dist=i&&x.odo>s[i-1].odo?x.odo-s[i-1].odo:null;
    let cons=dist?x.kwh/dist*100:null;
@@ -214,9 +229,9 @@ $('avg').textContent=dist>0?num(en/dist*100):'–';
 let odoValues=data.map(x=>Number(x.odo)).filter(Number.isFinite);
 $('totalKm').textContent=odoValues.length?num(Math.max(...odoValues),0):'–';
 $('grossTotal').textContent=euro(data.reduce((a,x)=>a+(Number(x.gross)||0),0));$('netTotal').textContent=euro(data.reduce((a,x)=>a+(Number(x.net)||0),0));$('energyTotal').textContent=num(data.reduce((a,x)=>a+(Number(x.kwh)||0),0))+' kWh';
-let m={};data.forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+(Number(v)||0)});let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0])),mx=Math.max(1,...me.map(x=>x[1]));
+let m={};data.filter(x=>x&&typeof x.date==='string'&&x.date.length>=7).forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+(Number(v)||0)});let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0])),mx=Math.max(1,...me.map(x=>x[1]));
 $('months').innerHTML=me.length?me.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric'}).format(new Date(Date.UTC(y,mo-1,1)));return `<div class="month"><div class="month-head"><span>${lab}</span><strong>${euro(v)}</strong></div><div class="track"><div class="bar" style="width:${Math.max(1,v/mx*100)}%"></div></div></div>`}).join(''):'Noch keine Daten.';
-let ys={};data.forEach(x=>{let y=x.date.slice(0,4);if(!ys[y])ys[y]={gross:0,net:0,kwh:0,count:0};ys[y].gross+=Number(x.gross)||0;ys[y].net+=Number(x.net)||0;ys[y].kwh+=Number(x.kwh)||0;ys[y].count++});
+let ys={};data.filter(x=>x&&typeof x.date==='string'&&x.date.length>=4).forEach(x=>{let y=x.date.slice(0,4);if(!ys[y])ys[y]={gross:0,net:0,kwh:0,count:0};ys[y].gross+=Number(x.gross)||0;ys[y].net+=Number(x.net)||0;ys[y].kwh+=Number(x.kwh)||0;ys[y].count++});
 $('years').innerHTML=Object.keys(ys).length?Object.entries(ys).sort((a,b)=>b[0].localeCompare(a[0])).map(([y,v])=>`<div class="year"><span><strong>${y}</strong><br><small>${v.count} Ladevorgänge · ${num(v.kwh)} kWh</small></span><span style="text-align:right">${euro(v.gross)}<br><small>netto ${euro(v.net)}</small></span></div>`).join(''):'Noch keine Daten.';
 const validHistory=c.filter(x=>x&&typeof x.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date));
 const yearSel=$('historyYear'),monthSel=$('historyMonth');
@@ -363,24 +378,12 @@ $('file').onchange=async e=>{
 }
 $('clear').onclick=()=>{if(confirm('Wirklich ALLE Ladevorgänge löschen?')){data=[];persist()}}
 
-const pageNames={history:'Ladehistorie',newcharge:'Neuer Ladevorgang',overview:'Gesamtübersicht',vehicle:'Fahrzeugdaten'};
-document.querySelectorAll('.dock button[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.dock button[data-page]').forEach(b=>b.classList.toggle('active',b===btn));
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  $('page-'+btn.dataset.page).classList.add('active');
-  $('pageSubtitle').textContent=pageNames[btn.dataset.page];
-  window.scrollTo({top:0,behavior:'smooth'});
-}));
-function goPage(name){
-  const b=document.querySelector('.dock button[data-page="'+name+'"]');
-  if(b)b.click();
-}
-
 $('costModeBtn').addEventListener('click',()=>{
  monthlyCostMode=monthlyCostMode==='gross'?'net':'gross';
  $('costModeBtn').textContent=monthlyCostMode==='gross'?'Brutto':'Netto';
  render();
 });
 
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');render();calcNet();
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
+try{render();calcNet()}catch(err){console.error('Darstellung fehlgeschlagen:',err);const st=$('dataStatus');if(st)st.textContent='Gespeicherte Daten vorhanden, Darstellung konnte nicht vollständig geladen werden: '+err.message;}
 </script></body></html>
