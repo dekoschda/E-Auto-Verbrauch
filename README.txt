@@ -1,7 +1,5 @@
-Version 20
-- Ladehistorie sichtbar nach Jahren getrennt.
-- Jedes Jahr besitzt eine eigene Überschrift mit Anzahl Ladevorgänge und geladenen kWh.
-- Monate innerhalb eines Jahres sind als klar getrennte Bereiche dargestellt.
-- Monatsüberschrift zeigt Anzahl, kWh und Bruttokosten.
-- Filter nach Jahr und Monat bleibt erhalten.
-- Datenspeicher ev-charges-v2 unverändert.
+Version 21
+Fehlerbehebung: Importierte/ältere numerische Werte werden beim Laden normalisiert.
+Dadurch kann die Gesamtübersicht das Rendern der Ladehistorie nicht mehr abbrechen.
+Jahr-/Monatsgruppierung und Filter bleiben erhalten.
+Datenspeicher ev-charges-v2 unverändert.

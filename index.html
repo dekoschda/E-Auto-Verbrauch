@@ -83,7 +83,7 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
 
-<div id="page-history" class="page active"><section class="panel"><div id="dataStatus" class="muted" style="margin-bottom:7px"></div>
+<div id="page-history" class="page active"><section class="panel"><div id="dataStatus" class="muted" style="margin-bottom:10px;font-weight:600"></div>
 <div class="actions"><button id="clear" class="danger">Alle Daten löschen</button></div>
 <h2>Ladehistorie</h2>
 <p class="muted">Die Ladevorgänge sind nach Monaten zusammengefasst.</p>
@@ -186,6 +186,11 @@ try{
   console.error('Ladehistorie konnte nicht gelesen werden:',err);
   data=[];
 }
+data=data.map(x=>({
+  ...x,
+  odo:Number(x.odo)||0,kwh:Number(x.kwh)||0,gross:Number(x.gross)||0,
+  net:Number(x.net)||0,vat:Number(x.vat)||0,start:Number(x.start)||0,end:Number(x.end)||0
+}));
 learnProviders();
 $('addProvider').addEventListener('click',addProvider);
 $('newProvider').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addProvider()}});
@@ -208,10 +213,10 @@ function render(){$('dataStatus').textContent=data.length?data.length+' gespeich
 $('avg').textContent=dist>0?num(en/dist*100):'–';
 let odoValues=data.map(x=>Number(x.odo)).filter(Number.isFinite);
 $('totalKm').textContent=odoValues.length?num(Math.max(...odoValues),0):'–';
-$('grossTotal').textContent=euro(data.reduce((a,x)=>a+x.gross,0));$('netTotal').textContent=euro(data.reduce((a,x)=>a+x.net,0));$('energyTotal').textContent=num(data.reduce((a,x)=>a+x.kwh,0))+' kWh';
-let m={};data.forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+v});let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0])),mx=Math.max(1,...me.map(x=>x[1]));
+$('grossTotal').textContent=euro(data.reduce((a,x)=>a+(Number(x.gross)||0),0));$('netTotal').textContent=euro(data.reduce((a,x)=>a+(Number(x.net)||0),0));$('energyTotal').textContent=num(data.reduce((a,x)=>a+(Number(x.kwh)||0),0))+' kWh';
+let m={};data.forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+(Number(v)||0)});let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0])),mx=Math.max(1,...me.map(x=>x[1]));
 $('months').innerHTML=me.length?me.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric'}).format(new Date(Date.UTC(y,mo-1,1)));return `<div class="month"><div class="month-head"><span>${lab}</span><strong>${euro(v)}</strong></div><div class="track"><div class="bar" style="width:${Math.max(1,v/mx*100)}%"></div></div></div>`}).join(''):'Noch keine Daten.';
-let ys={};data.forEach(x=>{let y=x.date.slice(0,4);if(!ys[y])ys[y]={gross:0,net:0,kwh:0,count:0};ys[y].gross+=x.gross;ys[y].net+=x.net;ys[y].kwh+=x.kwh;ys[y].count++});
+let ys={};data.forEach(x=>{let y=x.date.slice(0,4);if(!ys[y])ys[y]={gross:0,net:0,kwh:0,count:0};ys[y].gross+=Number(x.gross)||0;ys[y].net+=Number(x.net)||0;ys[y].kwh+=Number(x.kwh)||0;ys[y].count++});
 $('years').innerHTML=Object.keys(ys).length?Object.entries(ys).sort((a,b)=>b[0].localeCompare(a[0])).map(([y,v])=>`<div class="year"><span><strong>${y}</strong><br><small>${v.count} Ladevorgänge · ${num(v.kwh)} kWh</small></span><span style="text-align:right">${euro(v.gross)}<br><small>netto ${euro(v.net)}</small></span></div>`).join(''):'Noch keine Daten.';
 const validHistory=c.filter(x=>x&&typeof x.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date));
 const yearSel=$('historyYear'),monthSel=$('historyMonth');
