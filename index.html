@@ -231,16 +231,31 @@ function calcNet(){let g=+$('gross').value||0,v=+$('vat').value,n=g/(1+v/100);$(
 
 function esc(s){let d=document.createElement('div');d.textContent=s??'';return d.innerHTML}
 function calculated(){
+ const BATTERY_KWH=62.1;
  let s=[...data].filter(x=>x&&typeof x.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)).sort((a,b)=>a.date.localeCompare(b.date)||a.odo-b.odo);
  return s.map((x,i)=>{
-   let dist=i&&x.odo>s[i-1].odo?x.odo-s[i-1].odo:null;
-   let cons=dist?x.kwh/dist*100:null;
-   return {...x,dist,cons}
+   const prev=i?s[i-1]:null;
+   const dist=prev&&Number(x.odo)>Number(prev.odo)?Number(x.odo)-Number(prev.odo):null;
+   const start=Number(x.start),end=Number(x.end),prevEnd=prev?Number(prev.end):NaN,charged=Number(x.kwh);
+   let cons=null,usedKwh=null,chargeEfficiency=null;
+   // Ladeeffizienz aus dem aktuellen Ladevorgang: im Akku gespeicherte Energie / geladene Netzenergie.
+   if(Number.isFinite(start)&&Number.isFinite(end)&&end>start&&Number.isFinite(charged)&&charged>0){
+     const stored=BATTERY_KWH*(end-start)/100;
+     chargeEfficiency=Math.min(1,stored/charged);
+   }
+   // Fahrenergie aus der SoC-Abnahme zwischen dem Ende der vorherigen und dem Beginn der aktuellen Ladung.
+   if(dist>0&&Number.isFinite(prevEnd)&&Number.isFinite(start)&&prevEnd>=start){
+     const batteryUsed=BATTERY_KWH*(prevEnd-start)/100;
+     // Ladeverluste mit einbeziehen: Batterieenergie auf die dafür benötigte Netzenergie hochrechnen.
+     usedKwh=chargeEfficiency&&chargeEfficiency>0?batteryUsed/chargeEfficiency:batteryUsed;
+     cons=usedKwh/dist*100;
+   }
+   return {...x,dist,cons,usedKwh,chargeEfficiency}
  })
 }
 function persist(){localStorage.setItem(KEY,JSON.stringify(data));render()}
-function render(){$('dataStatus').textContent=data.length?data.length+' gespeicherte Ladevorgänge gefunden.':'Noch keine gespeicherten Ladevorgänge.';let c=calculated(),valid=c.filter(x=>x.dist>0&&Number.isFinite(Number(x.kwh))),dist=valid.reduce((a,x)=>a+x.dist,0),en=valid.reduce((a,x)=>a+Number(x.kwh),0);
-/* Nicht bereinigter Durchschnitt: tatsächlich geladene kWh inklusive Ladeverlusten / gefahrene km. */
+function render(){$('dataStatus').textContent=data.length?data.length+' gespeicherte Ladevorgänge gefunden.':'Noch keine gespeicherten Ladevorgänge.';let c=calculated(),valid=c.filter(x=>x.dist>0&&Number.isFinite(x.usedKwh)),dist=valid.reduce((a,x)=>a+x.dist,0),en=valid.reduce((a,x)=>a+x.usedKwh,0);
+/* Durchschnitt aus Fahrstrecke, SoC-Verbrauch, 62,1-kWh-Akku und den aus dem jeweiligen Ladevorgang ermittelten Ladeverlusten. */
 $('avg').textContent=dist>0?num(en/dist*100):'–';
 let odoValues=data.map(x=>Number(x.odo)).filter(Number.isFinite);
 $('totalKm').textContent=odoValues.length?num(Math.max(...odoValues),0):'–';
