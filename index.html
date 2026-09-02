@@ -64,14 +64,26 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 .vehicle-hero h2{margin-bottom:2px}
 .dock{grid-template-columns:repeat(4,1fr)!important}
 @media(min-width:700px){.vehicle-specs{grid-template-columns:repeat(3,minmax(0,1fr))}}
- .history-cards{grid-template-columns:1fr!important}</style></head>
+ .history-cards{grid-template-columns:1fr!important}
+.history-filters{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0 12px}
+.history-filters label{margin:0}
+.month-group{margin-bottom:12px}
+.month-group-head{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;padding:4px 2px 7px}
+.month-group-head h3{margin:0;font-size:1rem;text-transform:capitalize}
+.month-summary{text-align:right;font-size:.72rem;color:#aaa}
+.month-group .history-cards-inner{display:grid;grid-template-columns:1fr;gap:7px}
+</style></head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
 
 <div id="page-history" class="page active"><section class="panel"><div id="dataStatus" class="muted" style="margin-bottom:7px"></div>
 <div class="actions"><button id="clear" class="danger">Alle Daten löschen</button></div>
 <h2>Ladehistorie</h2>
-<p class="muted">Jeder Ladevorgang wird als eigene Kachel angezeigt.</p>
+<p class="muted">Die Ladevorgänge sind nach Monaten zusammengefasst.</p>
+<div class="history-filters">
+<label>Jahr<select id="historyYear"><option value="">Alle Jahre</option></select></label>
+<label>Monat<select id="historyMonth"><option value="">Alle Monate</option></select></label>
+</div>
 <div id="historyCards" class="history-cards"></div>
 </section></div>
 <div id="page-newcharge" class="page">
@@ -194,13 +206,34 @@ let m={};data.forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.
 $('months').innerHTML=me.length?me.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric'}).format(new Date(Date.UTC(y,mo-1,1)));return `<div class="month"><div class="month-head"><span>${lab}</span><strong>${euro(v)}</strong></div><div class="track"><div class="bar" style="width:${Math.max(1,v/mx*100)}%"></div></div></div>`}).join(''):'Noch keine Daten.';
 let ys={};data.forEach(x=>{let y=x.date.slice(0,4);if(!ys[y])ys[y]={gross:0,net:0,kwh:0,count:0};ys[y].gross+=x.gross;ys[y].net+=x.net;ys[y].kwh+=x.kwh;ys[y].count++});
 $('years').innerHTML=Object.keys(ys).length?Object.entries(ys).sort((a,b)=>b[0].localeCompare(a[0])).map(([y,v])=>`<div class="year"><span><strong>${y}</strong><br><small>${v.count} Ladevorgänge · ${num(v.kwh)} kWh</small></span><span style="text-align:right">${euro(v.gross)}<br><small>netto ${euro(v.net)}</small></span></div>`).join(''):'Noch keine Daten.';
-$('historyCards').innerHTML=[...c].reverse().map(x=>`<article class="charge-card">
+const yearsAvailable=[...new Set(c.map(x=>x.date.slice(0,4)))].sort((a,b)=>b.localeCompare(a));
+const yearSel=$('historyYear'),monthSel=$('historyMonth');
+const selectedYear=yearSel.value,selectedMonth=monthSel.value;
+yearSel.innerHTML='<option value="">Alle Jahre</option>'+yearsAvailable.map(y=>`<option value="${y}">${y}</option>`).join('');
+yearSel.value=yearsAvailable.includes(selectedYear)?selectedYear:'';
+const monthNames=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+monthSel.innerHTML='<option value="">Alle Monate</option>'+monthNames.map((n,i)=>`<option value="${String(i+1).padStart(2,'0')}">${n}</option>`).join('');
+monthSel.value=selectedMonth;
+
+let filtered=c.filter(x=>(!yearSel.value||x.date.slice(0,4)===yearSel.value)&&(!monthSel.value||x.date.slice(5,7)===monthSel.value));
+let groups={};
+filtered.forEach(x=>{let k=x.date.slice(0,7);(groups[k]||(groups[k]=[])).push(x)});
+$('historyCards').innerHTML=Object.entries(groups).sort((a,b)=>b[0].localeCompare(a[0])).map(([k,items])=>{
+  const [y,mo]=k.split('-').map(Number);
+  const label=monthNames[mo-1]+' '+y;
+  const kwh=items.reduce((a,x)=>a+Number(x.kwh||0),0);
+  const gross=items.reduce((a,x)=>a+Number(x.gross||0),0);
+  const cards=[...items].sort((a,b)=>b.date.localeCompare(a.date)||b.odo-a.odo).map(x=>`<article class="charge-card">
 <div class="charge-top"><div><div class="charge-date">${x.date.split('-').reverse().join('.')}</div><small class="muted">${esc(x.place)||'Kein Ladeort'} · ${esc(x.provider)||'Kein Anbieter'}</small></div><div class="charge-cost">${euro(x.gross)}<br><small class="muted">${euro(x.gross/x.kwh)}/kWh</small></div></div>
 <div class="charge-main"><div class="charge-stat"><small>Geladen</small><strong>${num(x.kwh,2)} kWh</strong></div><div class="charge-stat"><small>km-Stand</small><strong>${num(x.odo,0)}</strong></div><div class="charge-stat"><small>Verbrauch</small><strong>${x.cons?num(x.cons):'–'}</strong></div></div>
 <div class="charge-meta"><span>Akku: ${x.start} → ${x.end}%</span><span>Fahrt: ${x.dist?num(x.dist,0)+' km':'–'}</span><span>Netto: ${euro(x.net)}</span><span>MwSt.: ${x.vat}%</span></div>
 <div class="charge-actions"><button type="button" onclick="editEntry('${x.id}')">Bearbeiten</button><button type="button" onclick="delEntry('${x.id}')">Löschen</button></div>
-</article>`).join('') || '<p class="muted">Noch keine Ladevorgänge vorhanden.</p>';
+</article>`).join('');
+  return `<section class="month-group"><div class="month-group-head"><h3>${label}</h3><div class="month-summary">${items.length} Ladevorgänge · ${num(kwh)} kWh · ${euro(gross)}</div></div><div class="history-cards-inner">${cards}</div></section>`;
+}).join('') || '<p class="muted">Für diesen Filter sind keine Ladevorgänge vorhanden.</p>';
 }
+$('historyYear').addEventListener('change',render);
+$('historyMonth').addEventListener('change',render);
 function resetForm(){editId=null;$('form').reset();$('vat').value='19';$('date').value=new Date().toISOString().slice(0,10);$('formTitle').textContent='Neuen Ladevorgang erfassen';$('cancelEdit').hidden=true;calcNet()}
 window.delEntry=id=>{if(confirm('Diesen Ladevorgang löschen?')){data=data.filter(x=>x.id!==id);persist()}}
 window.editEntry=id=>{let x=data.find(x=>x.id===id);if(!x)return;editId=id;['date','odo','kwh','gross','vat','start','end','place','provider'].forEach(k=>$(k).value=x[k]);$('formTitle').textContent='Ladevorgang bearbeiten';$('cancelEdit').hidden=false;calcNet();goPage('newcharge')}
