@@ -79,6 +79,22 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 .year-history-group .month-group-head{padding:2px 3px 9px;border-bottom:1px solid #444;margin-bottom:8px}
 .year-history-group .month-group-head h3{font-size:1rem}
 .year-history-group+.year-history-group{border-top:2px solid #555;padding-top:18px}
+
+/* v24 kompakte Ladehistorie */
+.compact-charge-card{padding:7px 9px!important;margin-bottom:7px}
+.compact-charge-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px!important}
+.charge-identity{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.charge-place{font-size:.82rem;color:#ddd}
+.compact-cost{display:flex!important;align-items:baseline;gap:2px;white-space:nowrap;text-align:right}
+.compact-cost strong{font-size:.95rem}
+.compact-cost span{font-size:.76rem;color:#ccc}
+.compact-data-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;background:#333;border-radius:8px;padding:7px 9px;font-size:.75rem;gap:0}
+.compact-data-row span{padding:0 10px;border-right:1px solid #555;white-space:nowrap;text-align:center}
+.compact-data-row span:first-child{text-align:left;padding-left:0}
+.compact-data-row span:last-child{border-right:0;text-align:right;padding-right:0}
+.compact-actions{margin-top:5px!important;display:flex;gap:5px}
+.compact-actions button{padding:4px 7px!important;font-size:.68rem!important}
+@media(max-width:700px){.compact-charge-top{align-items:flex-start}.charge-identity{gap:5px 8px}.compact-cost{flex-direction:column;align-items:flex-end;gap:0}.compact-data-row{display:flex;overflow-x:auto;justify-content:flex-start}.compact-data-row span{min-width:max-content}.compact-actions{margin-top:4px!important}}
 </style></head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
@@ -246,11 +262,10 @@ if(keepMonth)monthSel.value=keepMonth;
 const filtered=validHistory.filter(x=>(!yearSel.value||x.date.slice(0,4)===yearSel.value)&&(!monthSel.value||x.date.slice(5,7)===monthSel.value));
 const groups={};
 filtered.forEach(x=>{const k=x.date.slice(0,7);if(!groups[k])groups[k]=[];groups[k].push(x)});
-const cardHtml=x=>`<article class="charge-card">
-<div class="charge-top"><div><div class="charge-date">${x.date.split('-').reverse().join('.')}</div><small class="muted">${esc(x.place)||'Kein Ladeort'} · ${esc(x.provider)||'Kein Anbieter'}</small></div><div class="charge-cost">${euro(Number(x.gross)||0)}<br><small class="muted">${Number(x.kwh)>0?euro((Number(x.gross)||0)/Number(x.kwh)):'–'}/kWh</small></div></div>
-<div class="charge-main"><div class="charge-stat"><small>Geladen</small><strong>${num(Number(x.kwh)||0,2)} kWh</strong></div><div class="charge-stat"><small>km-Stand</small><strong>${num(Number(x.odo)||0,0)}</strong></div><div class="charge-stat"><small>Verbrauch</small><strong>${Number.isFinite(x.cons)&&x.cons>0?num(x.cons):'–'}</strong></div></div>
-<div class="charge-meta"><span>Akku: ${x.start??'–'} → ${x.end??'–'}%</span><span>Fahrt: ${x.dist?num(x.dist,0)+' km':'–'}</span><span>Netto: ${euro(Number(x.net)||0)}</span><span>MwSt.: ${x.vat??'–'}%</span></div>
-<div class="charge-actions"><button type="button" onclick="editEntry('${x.id}')">Bearbeiten</button><button type="button" onclick="delEntry('${x.id}')">Löschen</button></div>
+const cardHtml=x=>`<article class="charge-card compact-charge-card">
+<div class="charge-top compact-charge-top"><div class="charge-identity"><div class="charge-date">${x.date.split('-').reverse().join('.')}</div><span class="charge-place">${esc(x.place)||'Kein Ladeort'} · ${esc(x.provider)||'Kein Anbieter'}</span></div><div class="charge-cost compact-cost"><strong>${euro(Number(x.gross)||0)}</strong><span> · ${euro(Number(x.net)||0)} · ${Number(x.kwh)>0?euro((Number(x.gross)||0)/Number(x.kwh)):'–'}/kWh</span></div></div>
+<div class="compact-data-row"><span>Geladen: <strong>${num(Number(x.kwh)||0,2)} kWh</strong></span><span>km-Stand: <strong>${num(Number(x.odo)||0,0)}</strong></span><span>Verbrauch: <strong>${Number.isFinite(x.cons)&&x.cons>0?num(x.cons):'–'}</strong></span><span>Akku: <strong>${x.start??'–'} → ${x.end??'–'}%</strong></span><span>Fahrt: <strong>${x.dist?num(x.dist,0)+' km':'–'}</strong></span></div>
+<div class="charge-actions compact-actions"><button type="button" onclick="editEntry('${x.id}')">Bearbeiten</button><button type="button" onclick="delEntry('${x.id}')">Löschen</button></div>
 </article>`;
 
 const byYear={};
@@ -263,7 +278,8 @@ const yearSections=Object.keys(byYear).sort().reverse().map(y=>{
    const parts=k.split('-'),label=monthNames[Number(parts[1])-1];
    const kwh=items.reduce((a,x)=>a+(Number(x.kwh)||0),0);
    const gross=items.reduce((a,x)=>a+(Number(x.gross)||0),0);
-   return `<section class="month-group"><div class="month-group-head"><h3>${label}</h3><div class="month-summary">${items.length} Ladevorgänge · ${num(kwh)} kWh · ${euro(gross)}</div></div><div class="history-cards-inner">${items.map(cardHtml).join('')}</div></section>`;
+   const net=items.reduce((a,x)=>a+(Number(x.net)||0),0);
+   return `<section class="month-group"><div class="month-group-head"><h3>${label}</h3><div class="month-summary">${items.length} Ladevorgänge · ${num(kwh)} kWh · ${euro(gross)} · ${euro(net)}</div></div><div class="history-cards-inner">${items.map(cardHtml).join('')}</div></section>`;
  }).join('');
  const yearItems=byYear[y].flatMap(k=>groups[k]);
  const yearKwh=yearItems.reduce((a,x)=>a+(Number(x.kwh)||0),0);
