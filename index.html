@@ -184,6 +184,27 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 @media(max-width:1050px){#summaryCards{grid-template-columns:repeat(3,1fr)!important}}
 @media(max-width:600px){#summaryCards{grid-template-columns:repeat(2,1fr)!important}}
 </style>
+
+<style id="v32-monthly">
+.monthly-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.monthly-panel{padding:16px 18px!important}
+.monthly-panel .month-title{align-items:flex-start}
+.monthly-panel .month-title h2{font-size:1.08rem!important;margin:0!important}
+.monthly-panel .month-title small{display:block;color:#aaa;margin-top:3px}
+.month-year{width:auto;min-width:92px;padding:7px 9px}
+.cost-controls{display:flex;gap:7px;align-items:center}
+.compact-month{margin:12px 0!important}
+.compact-month .month-head{font-size:.82rem!important;margin-bottom:5px!important}
+.compact-month .track{height:8px!important;background:#444!important}
+.compact-month .bar{border-radius:8px!important}
+.cons-green{background:#2ecc71!important}.cons-yellow{background:#eadb2b!important}.cons-orange{background:#ff8a3d!important}.cons-red{background:#ff5555!important}
+.cost-zero{background:#929db8!important}.cost-blue{background:#3498f5!important}.cost-purple{background:#8446ef!important}.cost-magenta{background:#b53bd4!important}
+.month-legend{display:flex;gap:18px;flex-wrap:wrap;border-top:1px solid #444;margin-top:15px;padding-top:10px;font-size:.72rem;color:#ccc}
+.month-legend span{display:flex;align-items:center;gap:6px}.lg{width:10px;height:10px;border-radius:50%;display:inline-block}
+.lg-green{background:#2ecc71}.lg-yellow{background:#eadb2b}.lg-orange{background:#ff8a3d}.lg-red{background:#ff5555}
+.lg-zero{background:#929db8}.lg-blue{background:#3498f5}.lg-purple{background:#8446ef}.lg-magenta{background:#b53bd4}
+@media(max-width:800px){.monthly-panels{grid-template-columns:1fr}}
+</style>
 </head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
@@ -224,7 +245,9 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <div class="place-legend"><span><b class="dot private-dot"></b>Privat <strong id="privateKwh">0,0 kWh</strong></span><span><b class="dot public-dot"></b>Öffentlich <strong id="publicKwh">0,0 kWh</strong></span><span id="unassignedPlace" class="muted"></span></div>
 </section>
 <br>
-<section class="grid" style="grid-template-columns:1fr 1fr"><div class="panel"><h2>Verbrauch pro Monat</h2><div id="monthlyConsumption" class="muted">Noch keine Daten.</div></div><div class="panel"><div class="month-title"><h2>Kosten pro Monat</h2><button id="costModeBtn" type="button" class="cost-toggle">Brutto</button></div><div id="months" class="muted">Noch keine Daten.</div></div>
+<section class="monthly-panels">
+<div class="panel monthly-panel consumption-panel"><div class="month-title"><div><h2>▥ &nbsp;Verbrauch pro Monat</h2><small>kWh/100 km</small></div><select id="consumptionYear" class="month-year"></select></div><div id="monthlyConsumption" class="muted">Noch keine Daten.</div><div class="month-legend consumption-legend"><span><i class="lg lg-green"></i>≤ 15</span><span><i class="lg lg-yellow"></i>15,1–18,0</span><span><i class="lg lg-orange"></i>18,1–20,0</span><span><i class="lg lg-red"></i>&gt; 20,0</span></div></div>
+<div class="panel monthly-panel costs-panel"><div class="month-title"><div><h2>◉ &nbsp;Kosten pro Monat</h2><small>in Euro</small></div><div class="cost-controls"><select id="costYear" class="month-year"></select><button id="costModeBtn" type="button" class="cost-toggle">Brutto</button></div></div><div id="months" class="muted">Noch keine Daten.</div><div class="month-legend cost-legend"><span><i class="lg lg-zero"></i>0 €</span><span><i class="lg lg-blue"></i>0,01–50 €</span><span><i class="lg lg-purple"></i>50,01–100 €</span><span><i class="lg lg-magenta"></i>&gt; 100 €</span></div></div>
 </section><br><section class="panel"><h2>Jahresauswertung</h2><div id="years" class="muted">Noch keine Daten.</div></section>
 <br>
 <section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung für Handywechsel/Wiederherstellung.</p>
@@ -273,7 +296,7 @@ function activatePage(name){
 document.querySelectorAll('.dock button[data-page]').forEach(btn=>{btn.onclick=()=>activatePage(btn.dataset.page)});
 function goPage(name){activatePage(name)}
 
-let monthlyCostMode='gross';
+let monthlyCostMode='gross';let consumptionYearFilter='';let costYearFilter='';
 
 const PROVIDER_KEY='ev-providers-v1';
 const DEFAULT_PROVIDERS=['EWE Go','Aldi Süd','Büro'];
@@ -366,9 +389,19 @@ $('privatePct').textContent=classified?num(privatePct,0)+' %':'0 %';$('publicPct
 $('privateKwh').textContent=num(placeEnergy.private)+' kWh';$('publicKwh').textContent=num(placeEnergy.public)+' kWh';
 $('unassignedPlace').textContent=placeEnergy.other>0?'Nicht zugeordnet: '+num(placeEnergy.other)+' kWh':'';
 
-let m={};data.filter(x=>x&&typeof x.date==='string'&&x.date.length>=7).forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+(Number(v)||0)});let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0])),mx=Math.max(1,...me.map(x=>x[1]));
-$('months').innerHTML=me.length?me.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric'}).format(new Date(Date.UTC(y,mo-1,1)));return `<div class="month"><div class="month-head"><span>${lab}</span><strong>${euro(v)}</strong></div><div class="track"><div class="bar" style="width:${Math.max(1,v/mx*100)}%"></div></div></div>`}).join(''):'Noch keine Daten.';
-let cm={};c.filter(x=>x&&x.dist>0&&Number.isFinite(x.usedKwh)&&typeof x.date==='string'&&x.date.length>=7).forEach(x=>{let k=x.date.slice(0,7);if(!cm[k])cm[k]={dist:0,kwh:0};cm[k].dist+=Number(x.dist)||0;cm[k].kwh+=Number(x.usedKwh)||0});let cme=Object.entries(cm).sort((a,b)=>b[0].localeCompare(a[0])).map(([k,v])=>[k,v.dist>0?v.kwh/v.dist*100:null]).filter(x=>Number.isFinite(x[1]));let cmx=Math.max(1,...cme.map(x=>x[1]));$('monthlyConsumption').innerHTML=cme.length?cme.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric'}).format(new Date(Date.UTC(y,mo-1,1)));return `<div class="month"><div class="month-head"><span>${lab}</span><strong>${num(v)} kWh/100 km</strong></div><div class="track"><div class="bar" style="width:${Math.max(1,v/cmx*100)}%"></div></div></div>`}).join(''):'Noch keine auswertbaren Fahrdaten.';
+const monthlyYears=[...new Set(data.filter(x=>x&&typeof x.date==='string'&&x.date.length>=4).map(x=>x.date.slice(0,4)))].sort((a,b)=>b.localeCompare(a));
+if(!consumptionYearFilter||!monthlyYears.includes(consumptionYearFilter))consumptionYearFilter=monthlyYears[0]||'';
+if(!costYearFilter||!monthlyYears.includes(costYearFilter))costYearFilter=monthlyYears[0]||'';
+$('consumptionYear').innerHTML=monthlyYears.map(y=>`<option value="${y}">${y}</option>`).join('');$('consumptionYear').value=consumptionYearFilter;
+$('costYear').innerHTML=monthlyYears.map(y=>`<option value="${y}">${y}</option>`).join('');$('costYear').value=costYearFilter;
+
+let m={};data.filter(x=>x&&typeof x.date==='string'&&x.date.startsWith(costYearFilter+'-')).forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+(Number(v)||0)});
+let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0]));
+$('months').innerHTML=me.length?me.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long'}).format(new Date(Date.UTC(y,mo-1,1)));let cls=v<=0?'cost-zero':v<=50?'cost-blue':v<=100?'cost-purple':'cost-magenta';let w=v<=0?1:Math.min(100,v/150*100);return `<div class="month compact-month"><div class="month-head"><span>${lab}</span><strong>${euro(v)}</strong></div><div class="track"><div class="bar ${cls}" style="width:${w}%"></div></div></div>`}).join(''):'Noch keine Daten.';
+
+let cm={};c.filter(x=>x&&x.dist>0&&Number.isFinite(x.usedKwh)&&typeof x.date==='string'&&x.date.startsWith(consumptionYearFilter+'-')).forEach(x=>{let k=x.date.slice(0,7);if(!cm[k])cm[k]={dist:0,kwh:0};cm[k].dist+=Number(x.dist)||0;cm[k].kwh+=Number(x.usedKwh)||0});
+let cme=Object.entries(cm).sort((a,b)=>b[0].localeCompare(a[0])).map(([k,v])=>[k,v.dist>0?v.kwh/v.dist*100:null]).filter(x=>Number.isFinite(x[1]));
+$('monthlyConsumption').innerHTML=cme.length?cme.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long'}).format(new Date(Date.UTC(y,mo-1,1)));let cls=v<=15?'cons-green':v<=18?'cons-yellow':v<=20?'cons-orange':'cons-red';return `<div class="month compact-month"><div class="month-head"><span>${lab}</span><strong>${num(v)} kWh/100 km</strong></div><div class="track"><div class="bar ${cls}" style="width:${Math.min(100,Math.max(1,v/25*100))}%"></div></div></div>`}).join(''):'Noch keine auswertbaren Fahrdaten.';
 let ys={};data.filter(x=>x&&typeof x.date==='string'&&x.date.length>=4).forEach(x=>{let y=x.date.slice(0,4);if(!ys[y])ys[y]={gross:0,net:0,kwh:0,count:0};ys[y].gross+=Number(x.gross)||0;ys[y].net+=Number(x.net)||0;ys[y].kwh+=Number(x.kwh)||0;ys[y].count++});
 $('years').innerHTML=Object.keys(ys).length?Object.entries(ys).sort((a,b)=>b[0].localeCompare(a[0])).map(([y,v])=>`<div class="year"><span><strong>${y}</strong><br><small>${v.count} Ladevorgänge · ${num(v.kwh)} kWh</small></span><span style="text-align:right">${euro(v.gross)}<br><small>netto ${euro(v.net)}</small></span></div>`).join(''):'Noch keine Daten.';
 const validHistory=c.filter(x=>x&&typeof x.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date));
@@ -521,6 +554,8 @@ $('costModeBtn').addEventListener('click',()=>{
  $('costModeBtn').textContent=monthlyCostMode==='gross'?'Brutto':'Netto';
  render();
 });
+$('consumptionYear').addEventListener('change',e=>{consumptionYearFilter=e.target.value;render();});
+$('costYear').addEventListener('change',e=>{costYearFilter=e.target.value;render();});
 
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 try{render();calcNet()}catch(err){console.error('Darstellung fehlgeschlagen:',err);const st=$('dataStatus');if(st)st.textContent='Gespeicherte Daten vorhanden, Darstellung konnte nicht vollständig geladen werden: '+err.message;}
