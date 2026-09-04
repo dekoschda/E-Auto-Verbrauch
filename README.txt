@@ -1,10 +1,8 @@
-Version 32
-- Verbrauch pro Monat und Kosten pro Monat kompakter und übersichtlicher.
-- Entfernt: zusätzliche Durchschnitts-/Summenboxen und Skalenboxen.
-- Verbrauchsbalken farbcodiert: grün <=15, gelb 15,1-18, orange 18,1-20, rot >20 kWh/100 km.
-- Kostenbalken farbcodiert: grau 0, blau bis 50, violett bis 100, magenta über 100 Euro.
-- Je Bereich Jahresauswahl; Kosten weiterhin Brutto/Netto umschaltbar.
-- Monatsnamen ohne wiederholte Jahreszahl.
-- Desktop nebeneinander, mobil untereinander.
-- Datenspeicher ev-charges-v2 und ev-providers-v1 unverändert.
-- JavaScript-Syntax und doppelte HTML-IDs geprüft.
+Version 33
+Verbrauchsfarben angepasst:
+- bis einschließlich 16,0 kWh/100 km: grün
+- 16,1 bis 19,0 kWh/100 km: gelb
+- über 19,0 kWh/100 km: orange
+Keine rote Verbrauchsstufe mehr.
+Bestehende Daten und Speicher-Keys bleiben unverändert.
+JavaScript-Syntax geprüft.
