@@ -203,7 +203,17 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 .month-legend span{display:flex;align-items:center;gap:6px}.lg{width:10px;height:10px;border-radius:50%;display:inline-block}
 .lg-green{background:#2ecc71}.lg-yellow{background:#eadb2b}.lg-orange{background:#ff8a3d}.lg-red{background:#ff5555}
 .lg-blue{background:#3498f5}.lg-purple{background:#8446ef}.lg-magenta{background:#b53bd4}
+.free-charge{display:flex;align-items:center;gap:9px;min-height:44px;margin-top:20px;padding:8px 10px;border:1px solid #666;border-radius:9px;background:#222}
+.free-charge input{width:20px;min-height:20px;height:20px;margin:0;accent-color:#2ecc71}
+.free-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;background:#176a39;color:#caffdd;border:1px solid #2ecc71;font-size:.68rem;font-weight:750;white-space:nowrap}
+.validation-box{grid-column:1/-1;display:none;margin-top:2px;padding:9px 11px;border-radius:9px;font-size:.82rem;line-height:1.45}
+.validation-box.show{display:block}.validation-box.warning{background:#4b3907;border:1px solid #d6a919;color:#ffe59a}.validation-box.error{background:#501d1d;border:1px solid #d75a5a;color:#ffd2d2}
+.trend-panel{margin-top:14px}.trend-controls{display:flex;gap:7px;align-items:center}.trend-controls select{width:auto;min-width:125px;padding:7px 9px}
+.trend-chart{margin-top:12px;min-height:235px}.trend-chart svg{display:block;width:100%;height:auto;min-height:220px;overflow:visible}
+.trend-grid{stroke:#4c4c4c;stroke-width:1}.trend-axis{fill:#bdbdbd;font-size:11px}.trend-line{fill:none;stroke:#48a8ff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.trend-line.cost{stroke:#ffae00}.trend-point{fill:#171717;stroke:#48a8ff;stroke-width:3}.trend-point.cost{stroke:#ffae00}
+.trend-summary{text-align:center;margin-top:5px;color:#ccc;font-size:.78rem}.backup-meta{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;font-size:.8rem;color:#ccc}.backup-meta strong{color:#fff}
 @media(max-width:800px){.monthly-panels{grid-template-columns:1fr}}
+@media(max-width:560px){.trend-controls{align-items:stretch;flex-direction:column}.trend-controls select{width:100%}.trend-chart{overflow-x:auto}.trend-chart svg{min-width:620px}}
 </style>
 </head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
@@ -228,13 +238,15 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <label>Kosten netto<input id="netPreview" readonly></label><label>Akku Beginn (%)<input id="start" type="number" min="0" max="100" required></label>
 <label>Akku Ende (%)<input id="end" type="number" min="0" max="100" required></label><label>Art des Ladeorts<select id="placeType" required><option value="">Bitte auswählen</option><option value="Privat">Privat</option><option value="Öffentlich">Öffentlich</option></select></label><label>Ort<input id="place" required></label><label>Ladeanbieter<select id="provider" required><option value="">Bitte auswählen</option></select></label>
 <label>Anderen Ladeanbieter hinzufügen<div class="provider-add"><input id="newProvider" type="text" placeholder="Neuen Anbieter eingeben"><button id="addProvider" type="button">Hinzufügen</button></div></label>
+<label class="free-charge"><input id="freeCharge" type="checkbox">Kostenloser Ladevorgang</label>
+<div id="plausibility" class="validation-box" role="status" aria-live="polite"></div>
 </form><div class="actions"><button id="save">Speichern</button><button id="cancelEdit" hidden>Bearbeiten abbrechen</button><span id="msg" class="muted"></span></div></section>
 </div>
 <div id="page-overview" class="page">
 <section id="summaryCards">
 <div class="card metric metric-km"><div class="metric-head"><span class="metric-icon">🚙</span><span>Gesamtkilometer</span></div><strong id="totalKm">–</strong><small>km</small></div>
 <div class="card metric metric-cons"><div class="metric-head"><span class="metric-icon">▥</span><span>Durchschnittsverbrauch</span></div><strong id="avg">–</strong><small>kWh/100 km</small></div>
-<div class="card metric metric-eurokm"><div class="metric-head"><span class="metric-icon">🪙</span><span>€/km</span></div><strong id="costPerKm">–</strong><small>Bruttokosten pro km</small></div>
+<div class="card metric metric-eurokm"><div class="metric-head"><span class="metric-icon">🪙</span><span>€/100 km</span></div><strong id="costPerKm">–</strong><small>Bruttokosten pro 100 km</small></div>
 <div class="card metric metric-charge" id="t4"><div class="metric-head"><span class="metric-icon">♧</span><span>Geladen</span></div><strong id="energyTotal">0,0 kWh</strong><small>gesamt</small></div>
 <div class="card metric metric-gross" id="t2"><div class="metric-head"><span class="metric-icon">▱</span><span>Kosten (Brutto)</span></div><strong id="grossTotal">0,00 €</strong></div>
 <div class="card metric metric-net" id="t3"><div class="metric-head"><span class="metric-icon">▱</span><span>Kosten (Netto)</span></div><strong id="netTotal">0,00 €</strong></div>
@@ -248,10 +260,13 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <section class="monthly-panels">
 <div class="panel monthly-panel consumption-panel"><div class="month-title"><div><h2>▥ &nbsp;Verbrauch pro Monat</h2><small>kWh/100 km</small></div><select id="consumptionYear" class="month-year"></select></div><div id="monthlyConsumption" class="muted">Noch keine Daten.</div><div class="month-legend consumption-legend"><span><i class="lg lg-green"></i>≤ 16,0</span><span><i class="lg lg-yellow"></i>16,1–19,0</span><span><i class="lg lg-orange"></i>19,1–21,0</span><span><i class="lg lg-red"></i>&gt; 21,0</span></div></div>
 <div class="panel monthly-panel costs-panel"><div class="month-title"><div><h2>◉ &nbsp;Kosten pro Monat</h2><small>in Euro</small></div><div class="cost-controls"><select id="costYear" class="month-year"></select><button id="costModeBtn" type="button" class="cost-toggle">Brutto</button></div></div><div id="months" class="muted">Noch keine Daten.</div><div class="month-legend cost-legend"><span><i class="lg lg-blue"></i>0–50 €</span><span><i class="lg lg-purple"></i>50,01–100 €</span><span><i class="lg lg-magenta"></i>&gt; 100 €</span></div></div>
-</section><br><section class="panel"><h2>Jahresauswertung</h2><div id="years" class="muted">Noch keine Daten.</div></section>
+</section>
+<section class="panel trend-panel"><div class="month-title"><div><h2>Entwicklung</h2><small>Monatswerte als Liniendiagramm</small></div><div class="trend-controls"><select id="trendMetric" aria-label="Kennzahl"><option value="consumption">Verbrauch</option><option value="cost">Kosten / 100 km</option></select><select id="trendYear" aria-label="Jahr"></select></div></div><div id="trendChart" class="trend-chart muted">Noch keine Daten.</div><div id="trendSummary" class="trend-summary"></div></section>
+<br><section class="panel"><h2>Jahresauswertung</h2><div id="years" class="muted">Noch keine Daten.</div></section>
 <br>
-<section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung für Handywechsel/Wiederherstellung.</p>
-<div class="actions"><button id="csvExport">CSV exportieren</button><button id="csvImport">CSV importieren</button><button id="backup">Backup (.json)</button><button id="restore">Backup wiederherstellen</button><input id="file" type="file" accept=".csv,.json" hidden></div></section>
+<section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung inklusive Ladevorgängen, Ladeanbietern und App-Einstellungen.</p>
+<div class="backup-meta"><span>App-Version: <strong id="appVersion">–</strong></span><span>Letzte JSON-Sicherung: <strong id="lastBackup">Noch keine Sicherung</strong></span></div>
+<div class="actions"><button id="csvExport">CSV exportieren</button><button id="csvImport">CSV importieren</button><button id="backup">Vollständige JSON-Sicherung</button><button id="restore">JSON-Sicherung wiederherstellen</button><input id="file" type="file" accept=".csv,.json" hidden></div></section>
 </div>
 
 <div id="page-vehicle" class="page">
@@ -283,7 +298,7 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 </nav>
 <script>
 const $=x=>document.getElementById(x), euro=n=>Number(n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}), num=(n,d=1)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
-const KEY='ev-charges-v2'
+const APP_VERSION='37',SCHEMA_VERSION=3,KEY='ev-charges-v2',LAST_BACKUP_KEY='ev-last-json-backup-v1';
 
 // Dock bewusst sehr frueh aktivieren: Navigation bleibt auch bei fehlerhaften Alt-Daten benutzbar.
 const pageNames={history:'Ladehistorie',newcharge:'Neuer Ladevorgang',overview:'Gesamtübersicht',vehicle:'Fahrzeugdaten'};
@@ -296,7 +311,7 @@ function activatePage(name){
 document.querySelectorAll('.dock button[data-page]').forEach(btn=>{btn.onclick=()=>activatePage(btn.dataset.page)});
 function goPage(name){activatePage(name)}
 
-let monthlyCostMode='gross';let consumptionYearFilter='';let costYearFilter='';
+let monthlyCostMode='gross';let consumptionYearFilter='';let costYearFilter='';let trendYearFilter='';let trendMetric='consumption';
 
 const PROVIDER_KEY='ev-providers-v1';
 const DEFAULT_PROVIDERS=['EWE Go','Aldi Süd','Büro'];
@@ -324,6 +339,12 @@ function learnProviders(){
  renderProviders();
 }
 ; let data=[], editId=null, importMode=null;
+function normalizeCharges(items){return (Array.isArray(items)?items:[]).map(x=>({
+  ...x,
+  odo:Number(x.odo)||0,kwh:Number(x.kwh)||0,gross:Number(x.gross)||0,
+  net:Number(x.net)||0,vat:Number(x.vat)||0,start:Number(x.start)||0,end:Number(x.end)||0,
+  free:x.free===true||Number(x.gross)===0
+}))}
 try{
   const savedCharges=localStorage.getItem(KEY);
   data=savedCharges?JSON.parse(savedCharges):[];
@@ -332,17 +353,62 @@ try{
   console.error('Ladehistorie konnte nicht gelesen werden:',err);
   data=[];
 }
-data=data.map(x=>({
-  ...x,
-  odo:Number(x.odo)||0,kwh:Number(x.kwh)||0,gross:Number(x.gross)||0,
-  net:Number(x.net)||0,vat:Number(x.vat)||0,start:Number(x.start)||0,end:Number(x.end)||0
-}));
+data=normalizeCharges(data);
 learnProviders();
 $('addProvider').addEventListener('click',addProvider);
 $('newProvider').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addProvider()}});
 
 $('date').value=new Date().toISOString().slice(0,10);
 function calcNet(){let g=+$('gross').value||0,v=+$('vat').value,n=g/(1+v/100);$('netPreview').value=n.toFixed(2);return n}$('gross').oninput=calcNet;$('vat').onchange=calcNet;
+
+function formCandidate(){
+ return {date:$('date').value,odo:Number($('odo').value),kwh:Number($('kwh').value),gross:Number($('gross').value),vat:Number($('vat').value),start:Number($('start').value),end:Number($('end').value),free:$('freeCharge').checked||Number($('gross').value)===0};
+}
+function checkPlausibility(x,currentId=null){
+ const errors=[],warnings=[],others=data.filter(v=>v&&v.id!==currentId);
+ const validDate=/^\d{4}-\d{2}-\d{2}$/.test(x.date);
+ if(validDate&&x.date>new Date().toISOString().slice(0,10))errors.push('Das Datum liegt in der Zukunft.');
+ if(Number.isFinite(x.start)&&Number.isFinite(x.end)){
+   if(x.end<x.start)errors.push('Der Akku-Endstand ist kleiner als der Anfangsstand.');
+   else if(x.end===x.start&&Number.isFinite(x.kwh)&&x.kwh>0)warnings.push('Der Akkustand hat sich trotz geladener Energie nicht verändert.');
+ }
+ if(validDate&&Number.isFinite(x.odo)){
+   const earlier=others.filter(v=>typeof v.date==='string'&&v.date<x.date&&Number.isFinite(Number(v.odo)));
+   const later=others.filter(v=>typeof v.date==='string'&&v.date>x.date&&Number.isFinite(Number(v.odo)));
+   const prev=earlier.sort((a,b)=>b.date.localeCompare(a.date)||Number(b.odo)-Number(a.odo))[0];
+   const next=later.sort((a,b)=>a.date.localeCompare(b.date)||Number(a.odo)-Number(b.odo))[0];
+   if(prev&&x.odo<Number(prev.odo))errors.push('Der Kilometerstand ist niedriger als bei einem früheren Ladevorgang.');
+   if(next&&x.odo>Number(next.odo))errors.push('Der Kilometerstand ist höher als bei einem späteren Ladevorgang.');
+   if(prev&&x.odo-Number(prev.odo)>2000)warnings.push('Seit dem vorherigen Ladevorgang liegen mehr als 2.000 km.');
+ }
+ if(validDate&&Number.isFinite(x.odo)&&Number.isFinite(x.kwh)&&Number.isFinite(x.gross)){
+   const duplicate=others.some(v=>v.date===x.date&&Number(v.odo)===x.odo&&Math.abs(Number(v.kwh)-x.kwh)<.001&&Math.abs(Number(v.gross)-x.gross)<.01);
+   if(duplicate)errors.push('Ein identischer Ladevorgang ist bereits gespeichert.');
+ }
+ if(Number.isFinite(x.kwh)&&x.kwh>100)warnings.push('Die Lademenge liegt über 100 kWh.');
+ if(Number.isFinite(x.kwh)&&x.kwh>0&&Number.isFinite(x.start)&&Number.isFinite(x.end)&&x.end>x.start){
+   const stored=62.1*(x.end-x.start)/100;
+   if(stored>x.kwh*1.08)warnings.push('Die berechnete Energie im Akku ist größer als die angegebene Lademenge.');
+ }
+ if(!x.free&&Number.isFinite(x.gross)&&Number.isFinite(x.kwh)&&x.kwh>0&&x.gross/x.kwh>1.5)warnings.push('Der Preis liegt über 1,50 €/kWh.');
+ return {errors,warnings};
+}
+function updatePlausibility(){
+ const box=$('plausibility'),hasValues=$('odo').value!==''||$('kwh').value!==''||$('start').value!==''||$('end').value!=='';
+ if(!hasValues){box.className='validation-box';box.textContent='';return}
+ const result=checkPlausibility(formCandidate(),editId),items=[...result.errors,...result.warnings];
+ if(!items.length){box.className='validation-box';box.textContent='';return}
+ box.className='validation-box show '+(result.errors.length?'error':'warning');
+ box.innerHTML='<strong>'+(result.errors.length?'Eingabe prüfen:':'Plausibilitätshinweis:')+'</strong><br>'+items.map(esc).join('<br>');
+}
+function applyFreeState(){
+ const checked=$('freeCharge').checked,gross=$('gross'),vat=$('vat');
+ if(checked){if(!gross.disabled&&gross.value&&Number(gross.value)>0)gross.dataset.previous=gross.value;gross.value='0';vat.value='0'}
+ else if(gross.disabled){gross.value=gross.dataset.previous||'';vat.value='19'}
+ gross.disabled=checked;vat.disabled=checked;calcNet();updatePlausibility();
+}
+$('freeCharge').addEventListener('change',applyFreeState);
+['date','odo','kwh','gross','vat','start','end'].forEach(id=>$(id).addEventListener('input',updatePlausibility));
 
 function esc(s){let d=document.createElement('div');d.textContent=s??'';return d.innerHTML}
 function calculated(){
@@ -368,12 +434,45 @@ function calculated(){
    return {...x,dist,cons,usedKwh,chargeEfficiency}
  })
 }
+function trendSeries(charges,year,metric){
+ const months=Array.from({length:12},()=>({dist:0,kwh:0,gross:0}));
+ charges.filter(x=>x&&typeof x.date==='string'&&x.date.startsWith(year+'-')&&x.dist>0).forEach(x=>{
+   const month=Number(x.date.slice(5,7))-1;if(month<0||month>11)return;
+   months[month].dist+=Number(x.dist)||0;months[month].kwh+=Number(x.usedKwh)||0;months[month].gross+=Number(x.gross)||0;
+ });
+ return months.map(v=>v.dist>0?(metric==='cost'?v.gross/v.dist*100:v.kwh/v.dist*100):null);
+}
+function renderTrend(charges,years){
+ const yearSel=$('trendYear');
+ if(!trendYearFilter||!years.includes(trendYearFilter))trendYearFilter=years[0]||'';
+ yearSel.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');yearSel.value=trendYearFilter;yearSel.disabled=!years.length;
+ $('trendMetric').value=trendMetric;
+ const chart=$('trendChart'),summary=$('trendSummary');
+ if(!trendYearFilter){chart.innerHTML='Noch keine Daten.';summary.textContent='';return}
+ const values=trendSeries(charges,trendYearFilter,trendMetric),present=values.map((v,i)=>({v,i})).filter(x=>Number.isFinite(x.v));
+ if(!present.length){chart.innerHTML='Für diese Kennzahl sind noch keine auswertbaren Fahrdaten vorhanden.';summary.textContent='';return}
+ const W=720,H=260,L=55,R=18,T=18,B=42,PW=W-L-R,PH=H-T-B,maxValue=Math.max(...present.map(x=>x.v)),yMax=Math.max(1,maxValue*1.15);
+ const x=i=>L+i*PW/11,y=v=>T+PH-(v/yMax)*PH;
+ const ticks=[0,1,2,3,4],months=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+ const grid=ticks.map(i=>{const value=yMax*i/4,py=y(value);return `<line class="trend-grid" x1="${L}" y1="${py}" x2="${W-R}" y2="${py}"/><text class="trend-axis" x="${L-7}" y="${py+4}" text-anchor="end">${num(value,1)}</text>`}).join('');
+ const labels=months.map((m,i)=>`<text class="trend-axis" x="${x(i)}" y="${H-15}" text-anchor="middle">${m}</text>`).join('');
+ const points=present.map(p=>`${x(p.i)},${y(p.v)}`).join(' '),kind=trendMetric==='cost'?'cost':'',unit=trendMetric==='cost'?'€/100 km':'kWh/100 km';
+ const circles=present.map(p=>`<circle class="trend-point ${kind}" cx="${x(p.i)}" cy="${y(p.v)}" r="4"><title>${months[p.i]}: ${num(p.v,2)} ${unit}</title></circle>`).join('');
+ chart.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Entwicklung ${trendMetric==='cost'?'der Kosten':'des Verbrauchs'} ${trendYearFilter}">${grid}<polyline class="trend-line ${kind}" points="${points}"/>${circles}${labels}</svg>`;
+ const vals=present.map(x=>x.v),avg=vals.reduce((a,v)=>a+v,0)/vals.length;
+ summary.textContent=`Durchschnitt ${num(avg,2)} ${unit} · niedrigster Wert ${num(Math.min(...vals),2)} · höchster Wert ${num(Math.max(...vals),2)}`;
+}
+function renderBackupInfo(){
+ $('appVersion').textContent='v'+APP_VERSION;
+ const saved=localStorage.getItem(LAST_BACKUP_KEY),date=saved?new Date(saved):null;
+ $('lastBackup').textContent=date&&!Number.isNaN(date.getTime())?date.toLocaleString('de-DE',{dateStyle:'medium',timeStyle:'short'}):'Noch keine Sicherung';
+}
 function persist(){localStorage.setItem(KEY,JSON.stringify(data));render()}
 function render(){$('dataStatus').textContent=data.length?data.length+' gespeicherte Ladevorgänge gefunden.':'Noch keine gespeicherten Ladevorgänge.';let c=calculated(),valid=c.filter(x=>x.dist>0&&Number.isFinite(x.usedKwh)),dist=valid.reduce((a,x)=>a+x.dist,0),en=valid.reduce((a,x)=>a+x.usedKwh,0);
 /* Durchschnitt aus Fahrstrecke, SoC-Verbrauch, 62,1-kWh-Akku und den aus dem jeweiligen Ladevorgang ermittelten Ladeverlusten. */
 $('avg').textContent=dist>0?num(en/dist*100):'–';
 const grossSum=data.reduce((a,x)=>a+(Number(x.gross)||0),0);
-$('costPerKm').textContent=dist>0?new Intl.NumberFormat('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3}).format(grossSum/dist)+' €/km':'–';
+$('costPerKm').textContent=dist>0?new Intl.NumberFormat('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(grossSum/dist*100)+' €/100 km':'–';
 let odoValues=data.map(x=>Number(x.odo)).filter(Number.isFinite);
 $('totalKm').textContent=odoValues.length?num(Math.max(...odoValues),0):'–';
 $('grossTotal').textContent=euro(data.reduce((a,x)=>a+(Number(x.gross)||0),0));$('netTotal').textContent=euro(data.reduce((a,x)=>a+(Number(x.net)||0),0));$('energyTotal').textContent=num(data.reduce((a,x)=>a+(Number(x.kwh)||0),0))+' kWh';
@@ -394,6 +493,7 @@ if(!consumptionYearFilter||!monthlyYears.includes(consumptionYearFilter))consump
 if(!costYearFilter||!monthlyYears.includes(costYearFilter))costYearFilter=monthlyYears[0]||'';
 $('consumptionYear').innerHTML=monthlyYears.map(y=>`<option value="${y}">${y}</option>`).join('');$('consumptionYear').value=consumptionYearFilter;
 $('costYear').innerHTML=monthlyYears.map(y=>`<option value="${y}">${y}</option>`).join('');$('costYear').value=costYearFilter;
+renderTrend(c,monthlyYears);renderBackupInfo();
 
 let m={};data.filter(x=>x&&typeof x.date==='string'&&x.date.startsWith(costYearFilter+'-')).forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+(Number(v)||0)});
 let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0]));
@@ -418,7 +518,7 @@ const filtered=validHistory.filter(x=>(!yearSel.value||x.date.slice(0,4)===yearS
 const groups={};
 filtered.forEach(x=>{const k=x.date.slice(0,7);if(!groups[k])groups[k]=[];groups[k].push(x)});
 const cardHtml=x=>`<article class="charge-card compact-charge-card">
-<div class="charge-top compact-charge-top"><div class="charge-identity"><div class="charge-date">${x.date.split('-').reverse().join('.')}</div><span class="charge-place">${esc(x.place)||'Kein Ladeort'} · ${esc(x.provider)||'Kein Anbieter'}</span></div><div class="charge-cost compact-cost"><strong>${euro(Number(x.gross)||0)}</strong><span> · ${euro(Number(x.net)||0)} · ${Number(x.kwh)>0?euro((Number(x.gross)||0)/Number(x.kwh)):'–'}/kWh</span></div></div>
+<div class="charge-top compact-charge-top"><div class="charge-identity"><div class="charge-date">${x.date.split('-').reverse().join('.')}</div>${x.free||Number(x.gross)===0?'<span class="free-badge">Kostenlos</span>':''}<span class="charge-place">${esc(x.place)||'Kein Ladeort'} · ${esc(x.provider)||'Kein Anbieter'}</span></div><div class="charge-cost compact-cost"><strong>${euro(Number(x.gross)||0)}</strong><span> · ${euro(Number(x.net)||0)} · ${Number(x.kwh)>0?euro((Number(x.gross)||0)/Number(x.kwh)):'–'}/kWh</span></div></div>
 <div class="compact-data-row"><span>Geladen: <strong>${num(Number(x.kwh)||0,2)} kWh</strong></span><span>km-Stand: <strong>${num(Number(x.odo)||0,0)}</strong></span><span>Verbrauch: <strong>${Number.isFinite(x.cons)&&x.cons>0?num(x.cons):'–'}</strong></span><span>Akku: <strong>${x.start??'–'} → ${x.end??'–'}%</strong></span><span>Fahrt: <strong>${x.dist?num(x.dist,0)+' km':'–'}</strong></span></div>
 <div class="charge-actions compact-actions"><button type="button" onclick="editEntry('${x.id}')">Bearbeiten</button><button type="button" onclick="delEntry('${x.id}')">Löschen</button></div>
 </article>`;
@@ -434,7 +534,8 @@ const yearSections=Object.keys(byYear).sort().reverse().map(y=>{
    const kwh=items.reduce((a,x)=>a+(Number(x.kwh)||0),0);
    const gross=items.reduce((a,x)=>a+(Number(x.gross)||0),0);
    const net=items.reduce((a,x)=>a+(Number(x.net)||0),0);
-   return `<section class="month-group"><div class="month-group-head"><h3>${label}</h3><div class="month-summary">${items.length} Ladevorgänge · ${num(kwh)} kWh · ${euro(gross)} · ${euro(net)}</div></div><div class="history-cards-inner">${items.map(cardHtml).join('')}</div></section>`;
+   const freeCount=items.filter(x=>x.free||Number(x.gross)===0).length;
+   return `<section class="month-group"><div class="month-group-head"><h3>${label}</h3><div class="month-summary">${items.length} Ladevorgänge · ${num(kwh)} kWh · ${euro(gross)} · ${euro(net)}${freeCount?' · '+freeCount+' kostenlos':''}</div></div><div class="history-cards-inner">${items.map(cardHtml).join('')}</div></section>`;
  }).join('');
  const yearItems=byYear[y].flatMap(k=>groups[k]);
  const yearKwh=yearItems.reduce((a,x)=>a+(Number(x.kwh)||0),0);
@@ -447,14 +548,28 @@ if(c.length!==validHistory.length){
 }
 $('historyYear').addEventListener('change',render);
 $('historyMonth').addEventListener('change',render);
-function resetForm(){editId=null;$('form').reset();$('vat').value='19';$('date').value=new Date().toISOString().slice(0,10);$('formTitle').textContent='Neuen Ladevorgang erfassen';$('cancelEdit').hidden=true;calcNet()}
+function resetForm(){editId=null;$('form').reset();$('gross').disabled=false;$('vat').disabled=false;delete $('gross').dataset.previous;$('vat').value='19';$('date').value=new Date().toISOString().slice(0,10);$('formTitle').textContent='Neuen Ladevorgang erfassen';$('cancelEdit').hidden=true;$('msg').textContent='';calcNet();updatePlausibility()}
 window.delEntry=id=>{if(confirm('Diesen Ladevorgang löschen?')){data=data.filter(x=>x.id!==id);persist()}}
-window.editEntry=id=>{let x=data.find(x=>x.id===id);if(!x)return;editId=id;['date','odo','kwh','gross','vat','start','end','place','provider'].forEach(k=>$(k).value=x[k]);$('placeType').value=x.placeType||'';$('formTitle').textContent='Ladevorgang bearbeiten';$('cancelEdit').hidden=false;calcNet();goPage('newcharge')}
+window.editEntry=id=>{let x=data.find(x=>x.id===id);if(!x)return;editId=id;$('gross').disabled=false;$('vat').disabled=false;['date','odo','kwh','gross','vat','start','end','place','provider'].forEach(k=>$(k).value=x[k]);$('placeType').value=x.placeType||'';$('freeCharge').checked=x.free===true||Number(x.gross)===0;$('formTitle').textContent='Ladevorgang bearbeiten';$('cancelEdit').hidden=false;applyFreeState();calcNet();updatePlausibility();goPage('newcharge')}
 $('cancelEdit').onclick=resetForm;
-$('save').onclick=()=>{if(!$('form').reportValidity())return;let start=+$('start').value,end=+$('end').value;if(end<start){$('msg').textContent='Akku-Endstand muss größer sein.';return}let gross=+$('gross').value,vat=+$('vat').value,obj={id:editId||((crypto.randomUUID&&crypto.randomUUID())||String(Date.now())),date:$('date').value,odo:+$('odo').value,kwh:+$('kwh').value,gross,vat,net:gross/(1+vat/100),start,end,placeType:$('placeType').value,place:$('place').value.trim(),provider:$('provider').value.trim()};if(editId)data[data.findIndex(x=>x.id===editId)]=obj;else data.push(obj);persist();$('msg').textContent=editId?'Änderung gespeichert.':'Gespeichert.';resetForm();goPage('history')}
+$('save').onclick=()=>{
+ if(!$('form').reportValidity())return;
+ const candidate=formCandidate(),result=checkPlausibility(candidate,editId);updatePlausibility();
+ if(result.errors.length){$('msg').textContent='Bitte die rot markierten Plausibilitätsfehler korrigieren.';return}
+ if(result.warnings.length&&!confirm('Plausibilitätshinweis:\n\n• '+result.warnings.join('\n• ')+'\n\nTrotzdem speichern?'))return;
+ const gross=candidate.free?0:candidate.gross,vat=candidate.free?0:candidate.vat;
+ const obj={id:editId||((globalThis.crypto&&crypto.randomUUID&&crypto.randomUUID())||String(Date.now())),date:candidate.date,odo:candidate.odo,kwh:candidate.kwh,gross,vat,net:gross/(1+vat/100),start:candidate.start,end:candidate.end,free:candidate.free,placeType:$('placeType').value,place:$('place').value.trim(),provider:$('provider').value.trim()};
+ if(editId)data[data.findIndex(x=>x.id===editId)]=obj;else data.push(obj);
+ persist();resetForm();goPage('history');
+}
 function download(name,text,type){let b=new Blob([text],{type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('csvExport').onclick=()=>{let c=calculated(),h=['Datum','Kilometerstand','Lademenge kWh','Kosten netto EUR','MwSt Prozent','MwSt Betrag EUR','Kosten brutto EUR','Preis EUR/kWh','Akku Beginn Prozent','Akku Ende Prozent','Art des Ladeorts','Ort','Ladeanbieter','Gefahrene km','kWh/100 km'],q=v=>'"'+String(v??'').replaceAll('"','""')+'"',dec=v=>v==null?'':Number(v).toFixed(2).replace('.',',');let rows=[h,...c.map(x=>[x.date,x.odo,dec(x.kwh),dec(x.net),x.vat,dec(x.gross-x.net),dec(x.gross),dec(x.gross/x.kwh),x.start,x.end,x.placeType||'',x.place,x.provider,x.dist??'',x.cons==null?'':dec(x.cons)])];download('E-Auto-Verbrauch.csv','\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
-$('backup').onclick=()=>download('E-Auto-Verbrauch-Backup.json',JSON.stringify({version:2,created:new Date().toISOString(),data},null,2),'application/json');
+$('csvExport').onclick=()=>{let c=calculated(),h=['Datum','Kilometerstand','Lademenge kWh','Kosten netto EUR','MwSt Prozent','MwSt Betrag EUR','Kosten brutto EUR','Preis EUR/kWh','Kostenlos','Akku Beginn Prozent','Akku Ende Prozent','Art des Ladeorts','Ort','Ladeanbieter','Gefahrene km','kWh/100 km'],q=v=>'"'+String(v??'').replaceAll('"','""')+'"',dec=v=>v==null?'':Number(v).toFixed(2).replace('.',',');let rows=[h,...c.map(x=>[x.date,x.odo,dec(x.kwh),dec(x.net),x.vat,dec(x.gross-x.net),dec(x.gross),dec(x.gross/x.kwh),x.free||Number(x.gross)===0?'Ja':'Nein',x.start,x.end,x.placeType||'',x.place,x.provider,x.dist??'',x.cons==null?'':dec(x.cons)])];download('E-Auto-Verbrauch.csv','\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
+$('backup').onclick=()=>{
+ const createdAt=new Date().toISOString();
+ const backup={format:'E-Auto-Verbrauch-PWA',schemaVersion:SCHEMA_VERSION,appVersion:APP_VERSION,createdAt,vehicle:{name:'MG S5 EV Luxury Long Range',usableBatteryKwh:62.1},charges:data,providers,settings:{monthlyCostMode,consumptionYearFilter,costYearFilter,trendYearFilter,trendMetric}};
+ download('E-Auto-Verbrauch-Komplettsicherung-'+createdAt.slice(0,10)+'.json',JSON.stringify(backup,null,2),'application/json');
+ localStorage.setItem(LAST_BACKUP_KEY,createdAt);renderBackupInfo();
+};
 $('csvImport').onclick=()=>{importMode='csv';$('file').accept='.csv';$('file').click()};$('restore').onclick=()=>{importMode='json';$('file').accept='.json';$('file').click()};
 function parseCSV(text){
   text=String(text||'').replace(/^\ufeff/,'').trim();
@@ -508,7 +623,7 @@ function parseCSV(text){
     kwh:idx('Lademenge kWh','Lademenge','kWh'), net:idx('Kosten netto EUR','Kosten netto','Netto'),
     vat:idx('MwSt Prozent','MwSt','USt Prozent'), gross:idx('Kosten brutto EUR','Kosten brutto','Brutto','Kosten'),
     start:idx('Akku Beginn Prozent','Akku Beginn','SOC Beginn'), end:idx('Akku Ende Prozent','Akku Ende','SOC Ende'),
-    placeType:idx('Art des Ladeorts','Ladeortart','Privat Öffentlich'), place:idx('Ort','Ladeort'), provider:idx('Ladeanbieter','Anbieter')
+    free:idx('Kostenlos','Kostenfreie Ladung'),placeType:idx('Art des Ladeorts','Ladeortart','Privat Öffentlich'), place:idx('Ort','Ladeort'), provider:idx('Ladeanbieter','Anbieter')
   };
   if(I.date<0||I.odo<0||I.kwh<0) throw new Error('Pflichtspalten Datum, Kilometerstand oder Lademenge fehlen.');
 
@@ -519,6 +634,7 @@ function parseCSV(text){
       id:(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()+Math.random()),
       date:date(r[I.date]), odo:dec(r[I.odo]), kwh:dec(r[I.kwh]), net, vat, gross,
       start:I.start>=0?dec(r[I.start]):0, end:I.end>=0?dec(r[I.end]):0,
+      free:I.free>=0?/^(ja|yes|true|1)$/i.test(String(r[I.free]||'').trim()):gross===0,
       placeType:I.placeType>=0?(r[I.placeType]||''):'', place:I.place>=0?(r[I.place]||''):'', provider:I.provider>=0?(r[I.provider]||''):''
     };
   }).filter(x=>x.date&&x.kwh>0);
@@ -529,8 +645,19 @@ $('file').onchange=async e=>{
     const t=await f.text();
     if(importMode==='json'){
       const b=JSON.parse(t);
-      if(!Array.isArray(b.data))throw new Error('Ungültiges Backup.');
-      if(confirm('Aktuelle Daten durch dieses Backup ersetzen?')){data=b.data;learnProviders();persist()}
+      const charges=Array.isArray(b.charges)?b.charges:b.data;
+      if(!Array.isArray(charges))throw new Error('Ungültige JSON-Sicherung.');
+      if(confirm('Aktuelle Daten durch diese JSON-Sicherung ersetzen?')){
+        data=normalizeCharges(charges);
+        if(Array.isArray(b.providers)){providers=b.providers.filter(x=>typeof x==='string'&&x.trim());saveProviders()}
+        if(b.settings&&typeof b.settings==='object'){
+          monthlyCostMode=b.settings.monthlyCostMode==='net'?'net':'gross';
+          consumptionYearFilter=String(b.settings.consumptionYearFilter||'');costYearFilter=String(b.settings.costYearFilter||'');trendYearFilter=String(b.settings.trendYearFilter||'');trendMetric=b.settings.trendMetric==='cost'?'cost':'consumption';
+          $('costModeBtn').textContent=monthlyCostMode==='gross'?'Brutto':'Netto';
+        }
+        const backupDate=b.createdAt||b.created;if(backupDate&&!Number.isNaN(new Date(backupDate).getTime()))localStorage.setItem(LAST_BACKUP_KEY,new Date(backupDate).toISOString());
+        learnProviders();persist();alert(data.length+' Ladevorgänge aus der JSON-Sicherung wiederhergestellt.');
+      }
     }else{
       const imported=parseCSV(t);
       if(!imported.length)throw new Error('Keine gültigen Ladevorgänge gefunden.');
@@ -543,7 +670,7 @@ $('file').onchange=async e=>{
     }
   }catch(err){
     console.error(err);
-    alert('CSV-Import fehlgeschlagen: '+(err&&err.message?err.message:'Datei konnte nicht gelesen werden.'));
+    alert((importMode==='json'?'Wiederherstellung':'CSV-Import')+' fehlgeschlagen: '+(err&&err.message?err.message:'Datei konnte nicht gelesen werden.'));
   }
   e.target.value='';
 }
@@ -556,6 +683,8 @@ $('costModeBtn').addEventListener('click',()=>{
 });
 $('consumptionYear').addEventListener('change',e=>{consumptionYearFilter=e.target.value;render();});
 $('costYear').addEventListener('change',e=>{costYearFilter=e.target.value;render();});
+$('trendYear').addEventListener('change',e=>{trendYearFilter=e.target.value;render();});
+$('trendMetric').addEventListener('change',e=>{trendMetric=e.target.value;render();});
 
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 try{render();calcNet()}catch(err){console.error('Darstellung fehlgeschlagen:',err);const st=$('dataStatus');if(st)st.textContent='Gespeicherte Daten vorhanden, Darstellung konnte nicht vollständig geladen werden: '+err.message;}

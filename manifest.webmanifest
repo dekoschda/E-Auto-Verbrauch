@@ -1,7 +1,9 @@
 {
   "name": "E-Auto Verbrauch",
-  "short_name": "E-Verbrauch",
-  "start_url": "./",
+  "short_name": "E-Auto",
+  "description": "Verbrauch, Ladekosten und Ladehistorie des Elektroautos",
+  "lang": "de",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#171717",
