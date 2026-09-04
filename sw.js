@@ -1,4 +1,4 @@
-const C='e-auto-v34-no-stale';
+const C='e-auto-v35-farbbereiche';
 self.addEventListener('install',e=>self.skipWaiting());
 self.addEventListener('activate',e=>e.waitUntil(
   caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k))))

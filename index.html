@@ -198,11 +198,11 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 .compact-month .track{height:8px!important;background:#444!important}
 .compact-month .bar{border-radius:8px!important}
 .cons-green{background:#2ecc71!important}.cons-yellow{background:#eadb2b!important}.cons-orange{background:#ff8a3d!important}.cons-red{background:#ff5555!important}
-.cost-zero{background:#929db8!important}.cost-blue{background:#3498f5!important}.cost-purple{background:#8446ef!important}.cost-magenta{background:#b53bd4!important}
+.cost-blue{background:#3498f5!important}.cost-purple{background:#8446ef!important}.cost-magenta{background:#b53bd4!important}
 .month-legend{display:flex;gap:18px;flex-wrap:wrap;border-top:1px solid #444;margin-top:15px;padding-top:10px;font-size:.72rem;color:#ccc}
 .month-legend span{display:flex;align-items:center;gap:6px}.lg{width:10px;height:10px;border-radius:50%;display:inline-block}
 .lg-green{background:#2ecc71}.lg-yellow{background:#eadb2b}.lg-orange{background:#ff8a3d}.lg-red{background:#ff5555}
-.lg-zero{background:#929db8}.lg-blue{background:#3498f5}.lg-purple{background:#8446ef}.lg-magenta{background:#b53bd4}
+.lg-blue{background:#3498f5}.lg-purple{background:#8446ef}.lg-magenta{background:#b53bd4}
 @media(max-width:800px){.monthly-panels{grid-template-columns:1fr}}
 </style>
 </head>
@@ -246,8 +246,8 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 </section>
 <br>
 <section class="monthly-panels">
-<div class="panel monthly-panel consumption-panel"><div class="month-title"><div><h2>▥ &nbsp;Verbrauch pro Monat</h2><small>kWh/100 km</small></div><select id="consumptionYear" class="month-year"></select></div><div id="monthlyConsumption" class="muted">Noch keine Daten.</div><div class="month-legend consumption-legend"><span><i class="lg lg-green"></i>≤ 16,0</span><span><i class="lg lg-yellow"></i>16,1–19,0</span><span><i class="lg lg-orange"></i>&gt; 19,0</span></div></div>
-<div class="panel monthly-panel costs-panel"><div class="month-title"><div><h2>◉ &nbsp;Kosten pro Monat</h2><small>in Euro</small></div><div class="cost-controls"><select id="costYear" class="month-year"></select><button id="costModeBtn" type="button" class="cost-toggle">Brutto</button></div></div><div id="months" class="muted">Noch keine Daten.</div><div class="month-legend cost-legend"><span><i class="lg lg-zero"></i>0 €</span><span><i class="lg lg-blue"></i>0,01–50 €</span><span><i class="lg lg-purple"></i>50,01–100 €</span><span><i class="lg lg-magenta"></i>&gt; 100 €</span></div></div>
+<div class="panel monthly-panel consumption-panel"><div class="month-title"><div><h2>▥ &nbsp;Verbrauch pro Monat</h2><small>kWh/100 km</small></div><select id="consumptionYear" class="month-year"></select></div><div id="monthlyConsumption" class="muted">Noch keine Daten.</div><div class="month-legend consumption-legend"><span><i class="lg lg-green"></i>≤ 16,0</span><span><i class="lg lg-yellow"></i>16,1–19,0</span><span><i class="lg lg-orange"></i>19,1–21,0</span><span><i class="lg lg-red"></i>&gt; 21,0</span></div></div>
+<div class="panel monthly-panel costs-panel"><div class="month-title"><div><h2>◉ &nbsp;Kosten pro Monat</h2><small>in Euro</small></div><div class="cost-controls"><select id="costYear" class="month-year"></select><button id="costModeBtn" type="button" class="cost-toggle">Brutto</button></div></div><div id="months" class="muted">Noch keine Daten.</div><div class="month-legend cost-legend"><span><i class="lg lg-blue"></i>0–50 €</span><span><i class="lg lg-purple"></i>50,01–100 €</span><span><i class="lg lg-magenta"></i>&gt; 100 €</span></div></div>
 </section><br><section class="panel"><h2>Jahresauswertung</h2><div id="years" class="muted">Noch keine Daten.</div></section>
 <br>
 <section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung für Handywechsel/Wiederherstellung.</p>
@@ -397,11 +397,11 @@ $('costYear').innerHTML=monthlyYears.map(y=>`<option value="${y}">${y}</option>`
 
 let m={};data.filter(x=>x&&typeof x.date==='string'&&x.date.startsWith(costYearFilter+'-')).forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+(Number(v)||0)});
 let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0]));
-$('months').innerHTML=me.length?me.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long'}).format(new Date(Date.UTC(y,mo-1,1)));let cls=v<=0?'cost-zero':v<=50?'cost-blue':v<=100?'cost-purple':'cost-magenta';let w=v<=0?1:Math.min(100,v/150*100);return `<div class="month compact-month"><div class="month-head"><span>${lab}</span><strong>${euro(v)}</strong></div><div class="track"><div class="bar ${cls}" style="width:${w}%"></div></div></div>`}).join(''):'Noch keine Daten.';
+$('months').innerHTML=me.length?me.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long'}).format(new Date(Date.UTC(y,mo-1,1)));let cls=v<=50?'cost-blue':v<=100?'cost-purple':'cost-magenta';let w=v<=0?1:Math.min(100,v/150*100);return `<div class="month compact-month"><div class="month-head"><span>${lab}</span><strong>${euro(v)}</strong></div><div class="track"><div class="bar ${cls}" style="width:${w}%"></div></div></div>`}).join(''):'Noch keine Daten.';
 
 let cm={};c.filter(x=>x&&x.dist>0&&Number.isFinite(x.usedKwh)&&typeof x.date==='string'&&x.date.startsWith(consumptionYearFilter+'-')).forEach(x=>{let k=x.date.slice(0,7);if(!cm[k])cm[k]={dist:0,kwh:0};cm[k].dist+=Number(x.dist)||0;cm[k].kwh+=Number(x.usedKwh)||0});
 let cme=Object.entries(cm).sort((a,b)=>b[0].localeCompare(a[0])).map(([k,v])=>[k,v.dist>0?v.kwh/v.dist*100:null]).filter(x=>Number.isFinite(x[1]));
-$('monthlyConsumption').innerHTML=cme.length?cme.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long'}).format(new Date(Date.UTC(y,mo-1,1)));let cls=v<=16?'cons-green':v<=19?'cons-yellow':'cons-orange';return `<div class="month compact-month"><div class="month-head"><span>${lab}</span><strong>${num(v)} kWh/100 km</strong></div><div class="track"><div class="bar ${cls}" style="width:${Math.min(100,Math.max(1,v/25*100))}%"></div></div></div>`}).join(''):'Noch keine auswertbaren Fahrdaten.';
+$('monthlyConsumption').innerHTML=cme.length?cme.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long'}).format(new Date(Date.UTC(y,mo-1,1)));let cls=v<=16?'cons-green':v<=19?'cons-yellow':v<=21?'cons-orange':'cons-red';return `<div class="month compact-month"><div class="month-head"><span>${lab}</span><strong>${num(v)} kWh/100 km</strong></div><div class="track"><div class="bar ${cls}" style="width:${Math.min(100,Math.max(1,v/25*100))}%"></div></div></div>`}).join(''):'Noch keine auswertbaren Fahrdaten.';
 let ys={};data.filter(x=>x&&typeof x.date==='string'&&x.date.length>=4).forEach(x=>{let y=x.date.slice(0,4);if(!ys[y])ys[y]={gross:0,net:0,kwh:0,count:0};ys[y].gross+=Number(x.gross)||0;ys[y].net+=Number(x.net)||0;ys[y].kwh+=Number(x.kwh)||0;ys[y].count++});
 $('years').innerHTML=Object.keys(ys).length?Object.entries(ys).sort((a,b)=>b[0].localeCompare(a[0])).map(([y,v])=>`<div class="year"><span><strong>${y}</strong><br><small>${v.count} Ladevorgänge · ${num(v.kwh)} kWh</small></span><span style="text-align:right">${euro(v.gross)}<br><small>netto ${euro(v.net)}</small></span></div>`).join(''):'Noch keine Daten.';
 const validHistory=c.filter(x=>x&&typeof x.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date));
