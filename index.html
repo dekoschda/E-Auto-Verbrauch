@@ -208,12 +208,11 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 .free-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;background:#176a39;color:#caffdd;border:1px solid #2ecc71;font-size:.68rem;font-weight:750;white-space:nowrap}
 .validation-box{grid-column:1/-1;display:none;margin-top:2px;padding:9px 11px;border-radius:9px;font-size:.82rem;line-height:1.45}
 .validation-box.show{display:block}.validation-box.warning{background:#4b3907;border:1px solid #d6a919;color:#ffe59a}.validation-box.error{background:#501d1d;border:1px solid #d75a5a;color:#ffd2d2}
-.trend-panel{margin-top:14px}.trend-controls{display:flex;gap:7px;align-items:center}.trend-controls select{width:auto;min-width:125px;padding:7px 9px}
-.trend-chart{margin-top:12px;min-height:235px}.trend-chart svg{display:block;width:100%;height:auto;min-height:220px;overflow:visible}
-.trend-grid{stroke:#4c4c4c;stroke-width:1}.trend-axis{fill:#bdbdbd;font-size:11px}.trend-line{fill:none;stroke:#48a8ff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.trend-line.cost{stroke:#ffae00}.trend-point{fill:#171717;stroke:#48a8ff;stroke-width:3}.trend-point.cost{stroke:#ffae00}
-.trend-summary{text-align:center;margin-top:5px;color:#ccc;font-size:.78rem}.backup-meta{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;font-size:.8rem;color:#ccc}.backup-meta strong{color:#fff}
+.rolling-panel{margin-top:14px}.rolling-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:13px}
+.rolling-value{padding:13px 14px;border:1px solid #555;border-radius:11px;background:#242424}.rolling-value small{display:block;color:#aaa;margin-bottom:5px}.rolling-value strong{font-size:1.2rem;color:#fff}.rolling-note{margin:11px 0 0;color:#ccc;font-size:.8rem;line-height:1.45}
+.rolling-note .better{color:#64dc91}.rolling-note .worse{color:#ff8a72}.rolling-note .neutral{color:#ccc}.backup-meta{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;font-size:.8rem;color:#ccc}.backup-meta strong{color:#fff}
 @media(max-width:800px){.monthly-panels{grid-template-columns:1fr}}
-@media(max-width:560px){.trend-controls{align-items:stretch;flex-direction:column}.trend-controls select{width:100%}.trend-chart{overflow-x:auto}.trend-chart svg{min-width:620px}}
+@media(max-width:560px){.rolling-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
@@ -261,7 +260,7 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <div class="panel monthly-panel consumption-panel"><div class="month-title"><div><h2>▥ &nbsp;Verbrauch pro Monat</h2><small>kWh/100 km</small></div><select id="consumptionYear" class="month-year"></select></div><div id="monthlyConsumption" class="muted">Noch keine Daten.</div><div class="month-legend consumption-legend"><span><i class="lg lg-green"></i>≤ 16,0</span><span><i class="lg lg-yellow"></i>16,1–19,0</span><span><i class="lg lg-orange"></i>19,1–21,0</span><span><i class="lg lg-red"></i>&gt; 21,0</span></div></div>
 <div class="panel monthly-panel costs-panel"><div class="month-title"><div><h2>◉ &nbsp;Kosten pro Monat</h2><small>in Euro</small></div><div class="cost-controls"><select id="costYear" class="month-year"></select><button id="costModeBtn" type="button" class="cost-toggle">Brutto</button></div></div><div id="months" class="muted">Noch keine Daten.</div><div class="month-legend cost-legend"><span><i class="lg lg-blue"></i>0–50 €</span><span><i class="lg lg-purple"></i>50,01–100 €</span><span><i class="lg lg-magenta"></i>&gt; 100 €</span></div></div>
 </section>
-<section class="panel trend-panel"><div class="month-title"><div><h2>Entwicklung</h2><small>Monatswerte als Liniendiagramm</small></div><div class="trend-controls"><select id="trendMetric" aria-label="Kennzahl"><option value="consumption">Verbrauch</option><option value="cost">Kosten / 100 km</option></select><select id="trendYear" aria-label="Jahr"></select></div></div><div id="trendChart" class="trend-chart muted">Noch keine Daten.</div><div id="trendSummary" class="trend-summary"></div></section>
+<section class="panel rolling-panel"><div class="month-title"><div><h2>Letzte 30 Tage</h2><small id="rollingPeriod">Gleitender Durchschnitt bis heute</small></div></div><div class="rolling-grid"><div class="rolling-value"><small>Durchschnittsverbrauch</small><strong id="rollingConsumption">–</strong></div><div class="rolling-value"><small>Kosten pro 100 km</small><strong id="rollingCost">–</strong></div><div class="rolling-value"><small>Gefahrene Kilometer</small><strong id="rollingDistance">–</strong></div></div><p id="rollingComparison" class="rolling-note">Noch keine auswertbaren Fahrdaten.</p></section>
 <br><section class="panel"><h2>Jahresauswertung</h2><div id="years" class="muted">Noch keine Daten.</div></section>
 <br>
 <section class="panel"><h2>Datensicherung</h2><p class="muted">CSV für Excel oder vollständige JSON-Sicherung inklusive Ladevorgängen, Ladeanbietern und App-Einstellungen.</p>
@@ -298,7 +297,7 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 </nav>
 <script>
 const $=x=>document.getElementById(x), euro=n=>Number(n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}), num=(n,d=1)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
-const APP_VERSION='37',SCHEMA_VERSION=3,KEY='ev-charges-v2',LAST_BACKUP_KEY='ev-last-json-backup-v1';
+const APP_VERSION='38',SCHEMA_VERSION=3,KEY='ev-charges-v2',LAST_BACKUP_KEY='ev-last-json-backup-v1';
 
 // Dock bewusst sehr frueh aktivieren: Navigation bleibt auch bei fehlerhaften Alt-Daten benutzbar.
 const pageNames={history:'Ladehistorie',newcharge:'Neuer Ladevorgang',overview:'Gesamtübersicht',vehicle:'Fahrzeugdaten'};
@@ -311,7 +310,7 @@ function activatePage(name){
 document.querySelectorAll('.dock button[data-page]').forEach(btn=>{btn.onclick=()=>activatePage(btn.dataset.page)});
 function goPage(name){activatePage(name)}
 
-let monthlyCostMode='gross';let consumptionYearFilter='';let costYearFilter='';let trendYearFilter='';let trendMetric='consumption';
+let monthlyCostMode='gross';let consumptionYearFilter='';let costYearFilter='';
 
 const PROVIDER_KEY='ev-providers-v1';
 const DEFAULT_PROVIDERS=['EWE Go','Aldi Süd','Büro'];
@@ -434,33 +433,32 @@ function calculated(){
    return {...x,dist,cons,usedKwh,chargeEfficiency}
  })
 }
-function trendSeries(charges,year,metric){
- const months=Array.from({length:12},()=>({dist:0,kwh:0,gross:0}));
- charges.filter(x=>x&&typeof x.date==='string'&&x.date.startsWith(year+'-')&&x.dist>0).forEach(x=>{
-   const month=Number(x.date.slice(5,7))-1;if(month<0||month>11)return;
-   months[month].dist+=Number(x.dist)||0;months[month].kwh+=Number(x.usedKwh)||0;months[month].gross+=Number(x.gross)||0;
- });
- return months.map(v=>v.dist>0?(metric==='cost'?v.gross/v.dist*100:v.kwh/v.dist*100):null);
+function localDateKey(date){
+ const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,'0'),d=String(date.getDate()).padStart(2,'0');return `${y}-${m}-${d}`;
 }
-function renderTrend(charges,years){
- const yearSel=$('trendYear');
- if(!trendYearFilter||!years.includes(trendYearFilter))trendYearFilter=years[0]||'';
- yearSel.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');yearSel.value=trendYearFilter;yearSel.disabled=!years.length;
- $('trendMetric').value=trendMetric;
- const chart=$('trendChart'),summary=$('trendSummary');
- if(!trendYearFilter){chart.innerHTML='Noch keine Daten.';summary.textContent='';return}
- const values=trendSeries(charges,trendYearFilter,trendMetric),present=values.map((v,i)=>({v,i})).filter(x=>Number.isFinite(x.v));
- if(!present.length){chart.innerHTML='Für diese Kennzahl sind noch keine auswertbaren Fahrdaten vorhanden.';summary.textContent='';return}
- const W=720,H=260,L=55,R=18,T=18,B=42,PW=W-L-R,PH=H-T-B,maxValue=Math.max(...present.map(x=>x.v)),yMax=Math.max(1,maxValue*1.15);
- const x=i=>L+i*PW/11,y=v=>T+PH-(v/yMax)*PH;
- const ticks=[0,1,2,3,4],months=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
- const grid=ticks.map(i=>{const value=yMax*i/4,py=y(value);return `<line class="trend-grid" x1="${L}" y1="${py}" x2="${W-R}" y2="${py}"/><text class="trend-axis" x="${L-7}" y="${py+4}" text-anchor="end">${num(value,1)}</text>`}).join('');
- const labels=months.map((m,i)=>`<text class="trend-axis" x="${x(i)}" y="${H-15}" text-anchor="middle">${m}</text>`).join('');
- const points=present.map(p=>`${x(p.i)},${y(p.v)}`).join(' '),kind=trendMetric==='cost'?'cost':'',unit=trendMetric==='cost'?'€/100 km':'kWh/100 km';
- const circles=present.map(p=>`<circle class="trend-point ${kind}" cx="${x(p.i)}" cy="${y(p.v)}" r="4"><title>${months[p.i]}: ${num(p.v,2)} ${unit}</title></circle>`).join('');
- chart.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Entwicklung ${trendMetric==='cost'?'der Kosten':'des Verbrauchs'} ${trendYearFilter}">${grid}<polyline class="trend-line ${kind}" points="${points}"/>${circles}${labels}</svg>`;
- const vals=present.map(x=>x.v),avg=vals.reduce((a,v)=>a+v,0)/vals.length;
- summary.textContent=`Durchschnitt ${num(avg,2)} ${unit} · niedrigster Wert ${num(Math.min(...vals),2)} · höchster Wert ${num(Math.max(...vals),2)}`;
+function rollingValues(charges,startKey,endKey){
+ const rows=charges.filter(x=>x&&typeof x.date==='string'&&x.date>=startKey&&x.date<=endKey&&x.dist>0&&Number.isFinite(x.usedKwh));
+ const dist=rows.reduce((a,x)=>a+(Number(x.dist)||0),0),kwh=rows.reduce((a,x)=>a+(Number(x.usedKwh)||0),0),gross=rows.reduce((a,x)=>a+(Number(x.gross)||0),0);
+ return {dist,kwh,gross,consumption:dist>0?kwh/dist*100:null,cost:dist>0?gross/dist*100:null};
+}
+function renderRolling30(charges){
+ const end=new Date(),start=new Date(end),previousEnd=new Date(end),previousStart=new Date(end);
+ start.setDate(start.getDate()-29);previousEnd.setDate(previousEnd.getDate()-30);previousStart.setDate(previousStart.getDate()-59);
+ const current=rollingValues(charges,localDateKey(start),localDateKey(end)),previous=rollingValues(charges,localDateKey(previousStart),localDateKey(previousEnd));
+ const shortDate=d=>d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+ $('rollingPeriod').textContent=shortDate(start)+' bis '+shortDate(end);
+ $('rollingConsumption').textContent=current.consumption==null?'–':num(current.consumption,1)+' kWh/100 km';
+ $('rollingCost').textContent=current.cost==null?'–':num(current.cost,2)+' €/100 km';
+ $('rollingDistance').textContent=current.dist>0?num(current.dist,0)+' km':'–';
+ const note=$('rollingComparison');
+ if(current.dist<=0){note.className='rolling-note';note.textContent='Noch keine auswertbaren Fahrdaten in den letzten 30 Tagen.';return}
+ if(previous.dist<=0){note.className='rolling-note';note.textContent='Für einen Vergleich mit den vorherigen 30 Tagen fehlen noch Fahrdaten.';return}
+ const change=(now,before)=>before>0?(now-before)/before*100:null;
+ const part=(label,value)=>{
+   if(value==null||Math.abs(value)<.05)return `<span class="neutral">${label} unverändert</span>`;
+   const better=value<0,arrow=value<0?'▼':'▲';return `<span class="${better?'better':'worse'}">${label} ${arrow} ${num(Math.abs(value),1)} %</span>`;
+ };
+ note.innerHTML='Gegenüber den vorherigen 30 Tagen: '+part('Verbrauch',change(current.consumption,previous.consumption))+' · '+part('Kosten',change(current.cost,previous.cost));
 }
 function renderBackupInfo(){
  $('appVersion').textContent='v'+APP_VERSION;
@@ -493,7 +491,7 @@ if(!consumptionYearFilter||!monthlyYears.includes(consumptionYearFilter))consump
 if(!costYearFilter||!monthlyYears.includes(costYearFilter))costYearFilter=monthlyYears[0]||'';
 $('consumptionYear').innerHTML=monthlyYears.map(y=>`<option value="${y}">${y}</option>`).join('');$('consumptionYear').value=consumptionYearFilter;
 $('costYear').innerHTML=monthlyYears.map(y=>`<option value="${y}">${y}</option>`).join('');$('costYear').value=costYearFilter;
-renderTrend(c,monthlyYears);renderBackupInfo();
+renderRolling30(c);renderBackupInfo();
 
 let m={};data.filter(x=>x&&typeof x.date==='string'&&x.date.startsWith(costYearFilter+'-')).forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+(Number(v)||0)});
 let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0]));
@@ -566,7 +564,7 @@ function download(name,text,type){let b=new Blob([text],{type}),a=document.creat
 $('csvExport').onclick=()=>{let c=calculated(),h=['Datum','Kilometerstand','Lademenge kWh','Kosten netto EUR','MwSt Prozent','MwSt Betrag EUR','Kosten brutto EUR','Preis EUR/kWh','Kostenlos','Akku Beginn Prozent','Akku Ende Prozent','Art des Ladeorts','Ort','Ladeanbieter','Gefahrene km','kWh/100 km'],q=v=>'"'+String(v??'').replaceAll('"','""')+'"',dec=v=>v==null?'':Number(v).toFixed(2).replace('.',',');let rows=[h,...c.map(x=>[x.date,x.odo,dec(x.kwh),dec(x.net),x.vat,dec(x.gross-x.net),dec(x.gross),dec(x.gross/x.kwh),x.free||Number(x.gross)===0?'Ja':'Nein',x.start,x.end,x.placeType||'',x.place,x.provider,x.dist??'',x.cons==null?'':dec(x.cons)])];download('E-Auto-Verbrauch.csv','\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
 $('backup').onclick=()=>{
  const createdAt=new Date().toISOString();
- const backup={format:'E-Auto-Verbrauch-PWA',schemaVersion:SCHEMA_VERSION,appVersion:APP_VERSION,createdAt,vehicle:{name:'MG S5 EV Luxury Long Range',usableBatteryKwh:62.1},charges:data,providers,settings:{monthlyCostMode,consumptionYearFilter,costYearFilter,trendYearFilter,trendMetric}};
+ const backup={format:'E-Auto-Verbrauch-PWA',schemaVersion:SCHEMA_VERSION,appVersion:APP_VERSION,createdAt,vehicle:{name:'MG S5 EV Luxury Long Range',usableBatteryKwh:62.1},charges:data,providers,settings:{monthlyCostMode,consumptionYearFilter,costYearFilter}};
  download('E-Auto-Verbrauch-Komplettsicherung-'+createdAt.slice(0,10)+'.json',JSON.stringify(backup,null,2),'application/json');
  localStorage.setItem(LAST_BACKUP_KEY,createdAt);renderBackupInfo();
 };
@@ -652,7 +650,7 @@ $('file').onchange=async e=>{
         if(Array.isArray(b.providers)){providers=b.providers.filter(x=>typeof x==='string'&&x.trim());saveProviders()}
         if(b.settings&&typeof b.settings==='object'){
           monthlyCostMode=b.settings.monthlyCostMode==='net'?'net':'gross';
-          consumptionYearFilter=String(b.settings.consumptionYearFilter||'');costYearFilter=String(b.settings.costYearFilter||'');trendYearFilter=String(b.settings.trendYearFilter||'');trendMetric=b.settings.trendMetric==='cost'?'cost':'consumption';
+          consumptionYearFilter=String(b.settings.consumptionYearFilter||'');costYearFilter=String(b.settings.costYearFilter||'');
           $('costModeBtn').textContent=monthlyCostMode==='gross'?'Brutto':'Netto';
         }
         const backupDate=b.createdAt||b.created;if(backupDate&&!Number.isNaN(new Date(backupDate).getTime()))localStorage.setItem(LAST_BACKUP_KEY,new Date(backupDate).toISOString());
@@ -683,8 +681,6 @@ $('costModeBtn').addEventListener('click',()=>{
 });
 $('consumptionYear').addEventListener('change',e=>{consumptionYearFilter=e.target.value;render();});
 $('costYear').addEventListener('change',e=>{costYearFilter=e.target.value;render();});
-$('trendYear').addEventListener('change',e=>{trendYearFilter=e.target.value;render();});
-$('trendMetric').addEventListener('change',e=>{trendMetric=e.target.value;render();});
 
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 try{render();calcNet()}catch(err){console.error('Darstellung fehlgeschlagen:',err);const st=$('dataStatus');if(st)st.textContent='Gespeicherte Daten vorhanden, Darstellung konnte nicht vollständig geladen werden: '+err.message;}

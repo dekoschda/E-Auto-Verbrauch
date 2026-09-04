@@ -1,6 +1,7 @@
-Version 37
+Version 38
 Neue Funktionen:
-- Liniendiagramm für die monatliche Entwicklung von Verbrauch und Kosten je 100 km
+- kompakte Auswertung der letzten 30 Tage für Verbrauch, Kosten je 100 km und gefahrene Kilometer
+- Vergleich mit dem vorherigen 30-Tage-Zeitraum
 - automatische Plausibilitätsprüfung mit Fehlern und bestätigbaren Warnungen
 - kostenlose Ladevorgänge per Eingabefeld und Kennzeichnung in der Historie
 - Anzeige der App-Version und des Datums der letzten JSON-Sicherung

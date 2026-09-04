@@ -1,4 +1,4 @@
-const C='e-auto-v37-auswertung-backup';
+const C='e-auto-v38-30-tage';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(
