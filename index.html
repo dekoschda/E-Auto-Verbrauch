@@ -214,6 +214,29 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 @media(max-width:800px){.monthly-panels{grid-template-columns:1fr}}
 @media(max-width:560px){.rolling-grid{grid-template-columns:1fr}}
 </style>
+
+<style id="v39-mobile-place-compare">
+@media(max-width:600px){
+ #page-overview .place-compare{padding:9px 10px!important;margin:8px 0!important;overflow:hidden}
+ #page-overview .place-compare-title{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:6px!important;margin-bottom:6px!important}
+ #page-overview .place-compare-title strong{font-size:.88rem!important}
+ #page-overview .place-compare-title small{font-size:.62rem!important;margin:0!important;text-align:right}
+ #page-overview .place-bar{width:100%!important;height:20px!important;min-width:0!important}
+ #page-overview .private-bar,#page-overview .public-bar{overflow:hidden!important;min-width:0!important}
+ #page-overview .private-bar span,#page-overview .public-bar span{font-size:.70rem!important;overflow:hidden;text-overflow:clip}
+ #page-overview .place-legend{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important;gap:5px 10px!important;margin-top:6px!important;font-size:.68rem!important}
+ #page-overview .place-legend span{min-width:0!important;display:flex!important;align-items:center!important;gap:4px!important;white-space:nowrap!important}
+ #page-overview .place-legend span:nth-child(2){justify-content:flex-end!important}
+ #page-overview .place-legend #unassignedPlace{grid-column:1/-1!important;justify-content:center!important;white-space:normal!important;text-align:center}
+ #page-overview .place-legend strong{font-size:.68rem!important}
+ #page-overview .dot{width:8px!important;height:8px!important;flex:0 0 8px!important}
+}
+@media(max-width:360px){
+ #page-overview .place-compare-title small{display:none!important}
+ #page-overview .place-legend{grid-template-columns:1fr!important}
+ #page-overview .place-legend span,#page-overview .place-legend span:nth-child(2){justify-content:flex-start!important}
+}
+</style>
 </head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 

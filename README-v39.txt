@@ -1,0 +1,1 @@
+Version 39: Mobile-Darstellung Ladeort Vergleich korrigiert. Balken volle Breite, Privat/Oeffentlich in zwei Spalten; unter 360 px untereinander. Bestehende Daten bleiben erhalten. JavaScript-Syntax geprueft.
