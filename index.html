@@ -290,7 +290,7 @@ button{font-weight:700!important}
 .entry-costs{text-align:right;white-space:nowrap}.entry-costs>strong{font-size:.92rem;display:block}.entry-costs>span{display:block;margin-top:2px;color:var(--muted);font-size:.65rem}.entry-costs b{color:#59636e;margin:0 4px}
 .entry-facts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:#181c20;border:1px solid #2f353d;border-radius:10px;margin-top:8px;overflow:hidden}
 .entry-facts>span{padding:7px 9px;min-width:0;border-right:1px solid #2f353d}.entry-facts>span:last-child{border-right:0}
-.entry-facts small{display:block;color:#7f8a96;font-size:.57rem;margin-bottom:2px}.entry-facts strong{display:block;font-size:.69rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry-facts small{display:block;color:#7f8a96;font-size:.57rem;margin-bottom:2px}.entry-facts strong{display:block;font-size:.69rem;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.2;word-break:break-word}
 .entry-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:7px}.entry-actions button{min-height:30px!important;padding:4px 8px!important;font-size:.63rem!important;background:#313840!important;border-color:#414a54!important}.entry-actions .danger-link{background:transparent!important;border-color:transparent!important;color:#e98989!important}
 
 /* Neuer Ladevorgang */
@@ -325,8 +325,8 @@ button{font-weight:700!important}
  main{padding:12px 10px 96px!important}main>h1{font-size:1.35rem!important}#pageSubtitle{margin-bottom:12px!important}
  .app-section{padding:12px!important}.section-heading{margin-bottom:12px}.section-heading h2{font-size:1.08rem!important}.section-heading p{font-size:.72rem}.history-heading{align-items:center}.ghost-danger{font-size:.62rem!important;padding:6px 8px!important}
  .history-toolbar{grid-template-columns:1fr 1fr;gap:7px;padding:8px}.history-toolbar label:last-child{grid-column:1/-1}.history-toolbar select{min-height:38px!important;font-size:.75rem}
- .entry-primary{gap:8px}.entry-date-line>strong{font-size:.82rem}.entry-location{font-size:.66rem}.entry-costs>strong{font-size:.82rem}.entry-costs>span{font-size:.58rem}
- .entry-facts{grid-template-columns:repeat(2,minmax(0,1fr));gap:0}.entry-facts>span{padding:6px 7px}.entry-facts strong{font-size:.64rem}.entry-facts>span:nth-child(5){grid-column:1/-1;border-top:1px solid #2f353d}
+ .entry-primary{gap:8px;align-items:flex-start}.entry-date-line>strong{font-size:.82rem}.entry-location{font-size:.66rem}.entry-costs>strong{font-size:.82rem}.entry-costs>span{font-size:.58rem}
+ .entry-facts{grid-template-columns:repeat(2,minmax(0,1fr));gap:0}.entry-facts>span{padding:8px 8px}.entry-facts small{font-size:.58rem}.entry-facts strong{font-size:.72rem}.entry-facts>span:nth-child(odd){border-right:1px solid #2f353d}.entry-facts>span:nth-child(-n+4){border-bottom:1px solid #2f353d}.entry-facts>span:nth-child(5){grid-column:1/-1;border-right:0}
  .entry-actions{justify-content:flex-start}.entry-actions button{font-size:.6rem!important}
  .form-grid-5,.form-grid-4{grid-template-columns:1fr 1fr}.form-card{padding:10px}.form-footer{align-items:flex-start;flex-direction:column}.form-footer>div{width:100%}.form-footer button{flex:1}
  .vehicle-specs{grid-template-columns:repeat(2,minmax(0,1fr))!important}
@@ -336,7 +336,18 @@ button{font-weight:700!important}
 
 <style id="v43-history-facts-order">
 .entry-facts{grid-template-columns:repeat(5,minmax(0,1fr))!important}
-@media(max-width:520px){.entry-facts{grid-template-columns:repeat(5,minmax(0,1fr))!important}.entry-facts>span{padding:7px 5px!important}.entry-facts small{font-size:.54rem!important}.entry-facts strong{font-size:.66rem!important}}
+@media(max-width:520px){
+.entry-facts{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.entry-facts>span{padding:8px 8px!important}
+.entry-facts small{font-size:.58rem!important}
+.entry-facts strong{font-size:.72rem!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.2!important}
+.entry-facts>span:nth-child(5){grid-column:1/-1!important}
+}
+@media(max-width:390px){
+.entry-facts{grid-template-columns:1fr!important}
+.entry-facts>span{border-right:0!important}
+.entry-facts>span:nth-child(5){grid-column:auto!important}
+}
 </style>
 
 <style id="v45-icon-system">
@@ -351,7 +362,7 @@ button{font-weight:700!important}
 .entry-facts>span{position:relative;padding-left:29px!important}
 .fact-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:#aeb8c2}.fact-icon svg{width:15px;height:15px}
 .section-title-icon{display:flex!important;align-items:center!important;gap:8px!important}.section-title-icon .section-icon{width:18px;height:18px;color:#9fb8d6}.section-title-icon .section-icon svg{width:18px;height:18px}
-@media(max-width:520px){.entry-facts>span{padding-left:24px!important}.fact-icon{left:5px;width:13px;height:13px}.fact-icon svg{width:13px;height:13px}}
+@media(max-width:520px){.entry-facts>span{padding-left:26px!important}.fact-icon{left:7px;width:13px;height:13px}.fact-icon svg{width:13px;height:13px}}
 </style>
 </head>
 <body><main><h1 class="app-brand"><span class="app-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 5 14h6l-1 8 9-13h-6z"/></svg></span><span>E-Auto Verbrauch</span></h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
