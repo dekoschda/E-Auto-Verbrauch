@@ -116,7 +116,7 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <label>Lademenge (kWh)<input id="kwh" type="number" min=".01" step=".01" required></label><label>Kosten brutto (€)<input id="gross" type="number" min="0" step=".01" required></label>
 <label>MwSt.<select id="vat"><option value="19">19 %</option><option value="7">7 %</option><option value="0">0 %</option></select></label>
 <label>Kosten netto<input id="netPreview" readonly></label><label>Akku Beginn (%)<input id="start" type="number" min="0" max="100" required></label>
-<label>Akku Ende (%)<input id="end" type="number" min="0" max="100" required></label><label>Ort<input id="place" required></label><label>Ladeanbieter<select id="provider" required><option value="">Bitte auswählen</option></select></label>
+<label>Akku Ende (%)<input id="end" type="number" min="0" max="100" required></label><label>Art des Ladeorts<select id="placeType" required><option value="">Bitte auswählen</option><option value="Privat">Privat</option><option value="Öffentlich">Öffentlich</option></select></label><label>Ort<input id="place" required></label><label>Ladeanbieter<select id="provider" required><option value="">Bitte auswählen</option></select></label>
 <label>Anderen Ladeanbieter hinzufügen<div class="provider-add"><input id="newProvider" type="text" placeholder="Neuen Anbieter eingeben"><button id="addProvider" type="button">Hinzufügen</button></div></label>
 </form><div class="actions"><button id="save">Speichern</button><button id="cancelEdit" hidden>Bearbeiten abbrechen</button><span id="msg" class="muted"></span></div></section>
 </div>
@@ -124,6 +124,7 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 <section class="overview-metrics overview-main">
 <div class="card metric">Gesamtkilometer<br><strong id="totalKm">–</strong><br><small>km</small></div>
 <div class="card metric" id="t1">Ø Verbrauch<br><strong id="avg">–</strong><br><small>kWh/100 km</small></div>
+<div class="card metric"><span>€/km</span><br><strong id="costPerKm">–</strong><br><small>Bruttokosten pro km</small></div>
 <div class="card metric" id="t4">Geladen<br><strong id="energyTotal">0,0 kWh</strong><br><small>gesamt</small></div>
 </section>
 <div class="overview-separator"></div>
@@ -257,6 +258,8 @@ function persist(){localStorage.setItem(KEY,JSON.stringify(data));render()}
 function render(){$('dataStatus').textContent=data.length?data.length+' gespeicherte Ladevorgänge gefunden.':'Noch keine gespeicherten Ladevorgänge.';let c=calculated(),valid=c.filter(x=>x.dist>0&&Number.isFinite(x.usedKwh)),dist=valid.reduce((a,x)=>a+x.dist,0),en=valid.reduce((a,x)=>a+x.usedKwh,0);
 /* Durchschnitt aus Fahrstrecke, SoC-Verbrauch, 62,1-kWh-Akku und den aus dem jeweiligen Ladevorgang ermittelten Ladeverlusten. */
 $('avg').textContent=dist>0?num(en/dist*100):'–';
+const grossSum=data.reduce((a,x)=>a+(Number(x.gross)||0),0);
+$('costPerKm').textContent=dist>0?new Intl.NumberFormat('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3}).format(grossSum/dist)+' €/km':'–';
 let odoValues=data.map(x=>Number(x.odo)).filter(Number.isFinite);
 $('totalKm').textContent=odoValues.length?num(Math.max(...odoValues),0):'–';
 $('grossTotal').textContent=euro(data.reduce((a,x)=>a+(Number(x.gross)||0),0));$('netTotal').textContent=euro(data.reduce((a,x)=>a+(Number(x.net)||0),0));$('energyTotal').textContent=num(data.reduce((a,x)=>a+(Number(x.kwh)||0),0))+' kWh';
@@ -310,11 +313,11 @@ $('historyYear').addEventListener('change',render);
 $('historyMonth').addEventListener('change',render);
 function resetForm(){editId=null;$('form').reset();$('vat').value='19';$('date').value=new Date().toISOString().slice(0,10);$('formTitle').textContent='Neuen Ladevorgang erfassen';$('cancelEdit').hidden=true;calcNet()}
 window.delEntry=id=>{if(confirm('Diesen Ladevorgang löschen?')){data=data.filter(x=>x.id!==id);persist()}}
-window.editEntry=id=>{let x=data.find(x=>x.id===id);if(!x)return;editId=id;['date','odo','kwh','gross','vat','start','end','place','provider'].forEach(k=>$(k).value=x[k]);$('formTitle').textContent='Ladevorgang bearbeiten';$('cancelEdit').hidden=false;calcNet();goPage('newcharge')}
+window.editEntry=id=>{let x=data.find(x=>x.id===id);if(!x)return;editId=id;['date','odo','kwh','gross','vat','start','end','place','provider'].forEach(k=>$(k).value=x[k]);$('placeType').value=x.placeType||'';$('formTitle').textContent='Ladevorgang bearbeiten';$('cancelEdit').hidden=false;calcNet();goPage('newcharge')}
 $('cancelEdit').onclick=resetForm;
-$('save').onclick=()=>{if(!$('form').reportValidity())return;let start=+$('start').value,end=+$('end').value;if(end<start){$('msg').textContent='Akku-Endstand muss größer sein.';return}let gross=+$('gross').value,vat=+$('vat').value,obj={id:editId||((crypto.randomUUID&&crypto.randomUUID())||String(Date.now())),date:$('date').value,odo:+$('odo').value,kwh:+$('kwh').value,gross,vat,net:gross/(1+vat/100),start,end,place:$('place').value.trim(),provider:$('provider').value.trim()};if(editId)data[data.findIndex(x=>x.id===editId)]=obj;else data.push(obj);persist();$('msg').textContent=editId?'Änderung gespeichert.':'Gespeichert.';resetForm();goPage('history')}
+$('save').onclick=()=>{if(!$('form').reportValidity())return;let start=+$('start').value,end=+$('end').value;if(end<start){$('msg').textContent='Akku-Endstand muss größer sein.';return}let gross=+$('gross').value,vat=+$('vat').value,obj={id:editId||((crypto.randomUUID&&crypto.randomUUID())||String(Date.now())),date:$('date').value,odo:+$('odo').value,kwh:+$('kwh').value,gross,vat,net:gross/(1+vat/100),start,end,placeType:$('placeType').value,place:$('place').value.trim(),provider:$('provider').value.trim()};if(editId)data[data.findIndex(x=>x.id===editId)]=obj;else data.push(obj);persist();$('msg').textContent=editId?'Änderung gespeichert.':'Gespeichert.';resetForm();goPage('history')}
 function download(name,text,type){let b=new Blob([text],{type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('csvExport').onclick=()=>{let c=calculated(),h=['Datum','Kilometerstand','Lademenge kWh','Kosten netto EUR','MwSt Prozent','MwSt Betrag EUR','Kosten brutto EUR','Preis EUR/kWh','Akku Beginn Prozent','Akku Ende Prozent','Ort','Ladeanbieter','Gefahrene km','kWh/100 km'],q=v=>'"'+String(v??'').replaceAll('"','""')+'"',dec=v=>v==null?'':Number(v).toFixed(2).replace('.',',');let rows=[h,...c.map(x=>[x.date,x.odo,dec(x.kwh),dec(x.net),x.vat,dec(x.gross-x.net),dec(x.gross),dec(x.gross/x.kwh),x.start,x.end,x.place,x.provider,x.dist??'',x.cons==null?'':dec(x.cons)])];download('E-Auto-Verbrauch.csv','\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
+$('csvExport').onclick=()=>{let c=calculated(),h=['Datum','Kilometerstand','Lademenge kWh','Kosten netto EUR','MwSt Prozent','MwSt Betrag EUR','Kosten brutto EUR','Preis EUR/kWh','Akku Beginn Prozent','Akku Ende Prozent','Art des Ladeorts','Ort','Ladeanbieter','Gefahrene km','kWh/100 km'],q=v=>'"'+String(v??'').replaceAll('"','""')+'"',dec=v=>v==null?'':Number(v).toFixed(2).replace('.',',');let rows=[h,...c.map(x=>[x.date,x.odo,dec(x.kwh),dec(x.net),x.vat,dec(x.gross-x.net),dec(x.gross),dec(x.gross/x.kwh),x.start,x.end,x.placeType||'',x.place,x.provider,x.dist??'',x.cons==null?'':dec(x.cons)])];download('E-Auto-Verbrauch.csv','\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
 $('backup').onclick=()=>download('E-Auto-Verbrauch-Backup.json',JSON.stringify({version:2,created:new Date().toISOString(),data},null,2),'application/json');
 $('csvImport').onclick=()=>{importMode='csv';$('file').accept='.csv';$('file').click()};$('restore').onclick=()=>{importMode='json';$('file').accept='.json';$('file').click()};
 function parseCSV(text){
@@ -369,7 +372,7 @@ function parseCSV(text){
     kwh:idx('Lademenge kWh','Lademenge','kWh'), net:idx('Kosten netto EUR','Kosten netto','Netto'),
     vat:idx('MwSt Prozent','MwSt','USt Prozent'), gross:idx('Kosten brutto EUR','Kosten brutto','Brutto','Kosten'),
     start:idx('Akku Beginn Prozent','Akku Beginn','SOC Beginn'), end:idx('Akku Ende Prozent','Akku Ende','SOC Ende'),
-    place:idx('Ort','Ladeort'), provider:idx('Ladeanbieter','Anbieter')
+    placeType:idx('Art des Ladeorts','Ladeortart','Privat Öffentlich'), place:idx('Ort','Ladeort'), provider:idx('Ladeanbieter','Anbieter')
   };
   if(I.date<0||I.odo<0||I.kwh<0) throw new Error('Pflichtspalten Datum, Kilometerstand oder Lademenge fehlen.');
 
@@ -380,7 +383,7 @@ function parseCSV(text){
       id:(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()+Math.random()),
       date:date(r[I.date]), odo:dec(r[I.odo]), kwh:dec(r[I.kwh]), net, vat, gross,
       start:I.start>=0?dec(r[I.start]):0, end:I.end>=0?dec(r[I.end]):0,
-      place:I.place>=0?(r[I.place]||''):'', provider:I.provider>=0?(r[I.provider]||''):''
+      placeType:I.placeType>=0?(r[I.placeType]||''):'', place:I.place>=0?(r[I.place]||''):'', provider:I.provider>=0?(r[I.provider]||''):''
     };
   }).filter(x=>x.date&&x.kwh>0);
 }
