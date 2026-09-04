@@ -110,6 +110,61 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 .dot{width:10px;height:10px;border-radius:50%;display:inline-block}.private-dot{background:#49aa55}.public-dot{background:#3498db}
 @media(max-width:900px){#page-overview .overview-top{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:520px){#page-overview .overview-top{grid-template-columns:repeat(2,minmax(0,1fr))}.place-legend{flex-wrap:wrap}.place-compare-title{display:block}.place-compare-title small{display:block;margin-top:2px}}
+
+/* v29: Kennzahlenzeile wie abgestimmte Vorlage */
+#page-overview .overview-top{
+ display:grid!important;
+ grid-template-columns:repeat(6,minmax(0,1fr))!important;
+ gap:8px!important;
+ margin:0!important;
+}
+#page-overview .overview-top .metric{
+ min-width:0!important;
+ min-height:118px!important;
+ padding:12px 13px 10px!important;
+ border:2px solid!important;
+ border-radius:11px!important;
+ display:block!important;
+ text-align:left!important;
+ box-sizing:border-box!important;
+ overflow:hidden!important;
+ background:#202020;
+}
+#page-overview .overview-top .metric-head{
+ display:flex!important;align-items:center!important;gap:8px!important;
+ white-space:nowrap!important;font-size:.78rem!important;margin-bottom:10px!important;
+}
+#page-overview .overview-top .metric-icon{
+ font-size:1.55rem!important;line-height:1!important;min-width:28px!important;text-align:center!important;
+}
+#page-overview .overview-top .metric strong{
+ display:block!important;text-align:center!important;
+ font-size:1.45rem!important;line-height:1.12!important;white-space:nowrap!important;
+ margin:0!important;
+}
+#page-overview .overview-top .metric small{
+ display:block!important;text-align:center!important;font-size:.70rem!important;margin-top:5px!important;
+}
+#page-overview .metric-km{border-color:#147bd1!important;background:linear-gradient(135deg,#06385f,#092a47)!important}
+#page-overview .metric-cons{border-color:#159447!important;background:linear-gradient(135deg,#07562c,#073c25)!important}
+#page-overview .metric-eurokm{border-color:#f59b00!important;background:linear-gradient(135deg,#704400,#402900)!important}
+#page-overview .metric-charge{border-color:#8f35b7!important;background:linear-gradient(135deg,#512069,#321846)!important}
+#page-overview .metric-gross{border-color:#1595a3!important;background:linear-gradient(135deg,#07535b,#073b42)!important}
+#page-overview .metric-net{border-color:#1678ce!important;background:linear-gradient(135deg,#07447b,#082f58)!important}
+#page-overview .metric-km .metric-icon{color:#8dc9ff}
+#page-overview .metric-cons .metric-icon{color:#8fffd1}
+#page-overview .metric-eurokm .metric-icon{color:#ffae00}
+#page-overview .metric-charge .metric-icon{color:#e7c5ff}
+#page-overview .metric-gross .metric-icon,#page-overview .metric-net .metric-icon{color:#dff8ff}
+@media(max-width:1100px){
+ #page-overview .overview-top{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:600px){
+ #page-overview .overview-top{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #page-overview .overview-top .metric{min-height:105px!important}
+ #page-overview .overview-top .metric strong{font-size:1.15rem!important}
+ #page-overview .overview-top .metric-head{font-size:.70rem!important}
+}
 </style></head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
@@ -137,12 +192,12 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 </div>
 <div id="page-overview" class="page">
 <section class="overview-metrics overview-top">
-<div class="card metric">Gesamtkilometer<br><strong id="totalKm">–</strong><br><small>km</small></div>
-<div class="card metric" id="t1">Ø Verbrauch<br><strong id="avg">–</strong><br><small>kWh/100 km</small></div>
-<div class="card metric" id="t4">Geladen<br><strong id="energyTotal">0,0 kWh</strong><br><small>gesamt</small></div>
-<div class="card metric"><span>€/km</span><br><strong id="costPerKm">–</strong><br><small>Bruttokosten pro km</small></div>
-<div class="card metric" id="t2">Kosten brutto<br><strong id="grossTotal">0,00 €</strong><br><small>gesamt</small></div>
-<div class="card metric" id="t3">Kosten netto<br><strong id="netTotal">0,00 €</strong><br><small>gesamt</small></div>
+<div class="card metric metric-km"><div class="metric-head"><span class="metric-icon">🚙</span><span>Gesamtkilometer</span></div><strong id="totalKm">–</strong><small>km</small></div>
+<div class="card metric metric-cons"><div class="metric-head"><span class="metric-icon">▥</span><span>Durchschnittsverbrauch</span></div><strong id="avg">–</strong><small>kWh/100 km</small></div>
+<div class="card metric metric-eurokm"><div class="metric-head"><span class="metric-icon">🪙</span><span>€/km</span></div><strong id="costPerKm">–</strong><small>Bruttokosten pro km</small></div>
+<div class="card metric metric-charge" id="t4"><div class="metric-head"><span class="metric-icon">♧</span><span>Geladen</span></div><strong id="energyTotal">0,0 kWh</strong><small>gesamt</small></div>
+<div class="card metric metric-gross" id="t2"><div class="metric-head"><span class="metric-icon">▱</span><span>Kosten (Brutto)</span></div><strong id="grossTotal">0,00 €</strong></div>
+<div class="card metric metric-net" id="t3"><div class="metric-head"><span class="metric-icon">▱</span><span>Kosten (Netto)</span></div><strong id="netTotal">0,00 €</strong></div>
 </section>
 <section class="panel place-compare">
 <div class="place-compare-title"><strong>Ladeort Vergleich</strong><small>Anteil der geladenen Energie</small></div>
