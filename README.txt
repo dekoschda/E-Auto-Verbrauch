@@ -1,31 +1,10 @@
-Version 38
-Neue Funktionen:
-- kompakte Auswertung der letzten 30 Tage für Verbrauch, Kosten je 100 km und gefahrene Kilometer
-- Vergleich mit dem vorherigen 30-Tage-Zeitraum
-- automatische Plausibilitätsprüfung mit Fehlern und bestätigbaren Warnungen
-- kostenlose Ladevorgänge per Eingabefeld und Kennzeichnung in der Historie
-- Anzeige der App-Version und des Datums der letzten JSON-Sicherung
-- vollständige JSON-Sicherung inklusive Ladevorgängen, Ladeanbietern und Einstellungen
-- Wiederherstellung neuer Komplettsicherungen und älterer JSON-Backups
-- fehlende PWA-Ressourcen ergänzt und Offline-Cache funktionsfähig gemacht
+Version 40 – Einheitliches Design
 
-Kostenkennzahl in der Übersicht geändert:
-- Anzeige jetzt in Euro pro 100 km
-- Berechnung: gesamte Bruttokosten / Gesamtkilometer × 100
-- Darstellung mit zwei Nachkommastellen
-
-Farbbereiche korrigiert:
-- bis einschließlich 16,0 kWh/100 km = grün
-- 16,1 bis einschließlich 19,0 kWh/100 km = gelb
-- 19,1 bis einschließlich 21,0 kWh/100 km = orange
-- über 21,0 kWh/100 km = rot
-
-Kosten pro Monat:
-- 0 bis einschließlich 50,00 Euro = blau
-- 50,01 bis einschließlich 100,00 Euro = violett
-- über 100,00 Euro = magenta
-
-Legenden und Balkenlogik verwenden dieselben Grenzwerte.
-Der Service Worker leert alte Caches und lädt Dateien mit cache:no-store.
-JavaScript-Syntax und Grenzwertlogik wurden geprüft.
-Bestehende Ladehistorie bleibt unverändert.
+- Gesamte App optisch vereinheitlicht.
+- Ladehistorie komplett neu strukturiert: klare Monatsgruppen, kompakte Einträge, Kosten rechts, Fakten in einer ruhigen Infozeile.
+- Historie filterbar nach Jahr, Monat und Ladeart (Privat/Öffentlich).
+- Neuer Ladevorgang in drei logisch getrennte Bereiche gegliedert: Fahrt & Energie, Kosten, Ladeort.
+- Übersicht, Fahrzeugseite und Dock an dasselbe Designsystem angepasst.
+- Bestehende Funktionen aus v39 bleiben erhalten, einschließlich 30-Tage-Auswertung, Plausibilitätsprüfung und Sicherung.
+- Datenspeicher ev-charges-v2 und ev-providers-v1 bleiben unverändert.
+- JavaScript-Syntax, doppelte IDs und DOM-ID-Referenzen wurden geprüft.
