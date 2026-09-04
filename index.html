@@ -95,6 +95,21 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 .compact-actions{margin-top:5px!important;display:flex;gap:5px}
 .compact-actions button{padding:4px 7px!important;font-size:.68rem!important}
 @media(max-width:700px){.compact-charge-top{align-items:flex-start}.charge-identity{gap:5px 8px}.compact-cost{flex-direction:column;align-items:flex-end;gap:0}.compact-data-row{display:flex;overflow-x:auto;justify-content:flex-start}.compact-data-row span{min-width:max-content}.compact-actions{margin-top:4px!important}}
+
+#page-overview .overview-top{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+#page-overview .place-compare{padding:10px 14px;margin:10px 0}
+.place-compare-title{display:flex;align-items:baseline;gap:10px;margin-bottom:7px}
+.place-compare-title strong{font-size:.98rem}
+.place-compare-title small{font-size:.72rem;color:#aaa}
+.place-bar{height:22px;display:flex;overflow:hidden;border-radius:999px;background:#444}
+.private-bar,.public-bar{height:100%;display:flex;align-items:center;justify-content:center;min-width:0;transition:width .2s}
+.private-bar{background:#49aa55}.public-bar{background:#3498db}
+.private-bar span,.public-bar span{font-weight:700;font-size:.78rem;white-space:nowrap}
+.place-legend{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:7px;font-size:.76rem}
+.place-legend span{display:flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}.private-dot{background:#49aa55}.public-dot{background:#3498db}
+@media(max-width:900px){#page-overview .overview-top{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){#page-overview .overview-top{grid-template-columns:repeat(2,minmax(0,1fr))}.place-legend{flex-wrap:wrap}.place-compare-title{display:block}.place-compare-title small{display:block;margin-top:2px}}
 </style></head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
@@ -121,16 +136,18 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 </form><div class="actions"><button id="save">Speichern</button><button id="cancelEdit" hidden>Bearbeiten abbrechen</button><span id="msg" class="muted"></span></div></section>
 </div>
 <div id="page-overview" class="page">
-<section class="overview-metrics overview-main">
+<section class="overview-metrics overview-top">
 <div class="card metric">Gesamtkilometer<br><strong id="totalKm">–</strong><br><small>km</small></div>
 <div class="card metric" id="t1">Ø Verbrauch<br><strong id="avg">–</strong><br><small>kWh/100 km</small></div>
-<div class="card metric"><span>€/km</span><br><strong id="costPerKm">–</strong><br><small>Bruttokosten pro km</small></div>
 <div class="card metric" id="t4">Geladen<br><strong id="energyTotal">0,0 kWh</strong><br><small>gesamt</small></div>
-</section>
-<div class="overview-separator"></div>
-<section class="overview-metrics overview-costs">
+<div class="card metric"><span>€/km</span><br><strong id="costPerKm">–</strong><br><small>Bruttokosten pro km</small></div>
 <div class="card metric" id="t2">Kosten brutto<br><strong id="grossTotal">0,00 €</strong><br><small>gesamt</small></div>
 <div class="card metric" id="t3">Kosten netto<br><strong id="netTotal">0,00 €</strong><br><small>gesamt</small></div>
+</section>
+<section class="panel place-compare">
+<div class="place-compare-title"><strong>Ladeort Vergleich</strong><small>Anteil der geladenen Energie</small></div>
+<div class="place-bar" aria-label="Ladeort Vergleich"><div id="privateBar" class="private-bar"><span id="privatePct">0 %</span></div><div id="publicBar" class="public-bar"><span id="publicPct">0 %</span></div></div>
+<div class="place-legend"><span><b class="dot private-dot"></b>Privat <strong id="privateKwh">0,0 kWh</strong></span><span><b class="dot public-dot"></b>Öffentlich <strong id="publicKwh">0,0 kWh</strong></span><span id="unassignedPlace" class="muted"></span></div>
 </section>
 <br>
 <section class="grid" style="grid-template-columns:1fr 1fr"><div class="panel"><h2>Verbrauch pro Monat</h2><div id="monthlyConsumption" class="muted">Noch keine Daten.</div></div><div class="panel"><div class="month-title"><h2>Kosten pro Monat</h2><button id="costModeBtn" type="button" class="cost-toggle">Brutto</button></div><div id="months" class="muted">Noch keine Daten.</div></div>
@@ -263,6 +280,18 @@ $('costPerKm').textContent=dist>0?new Intl.NumberFormat('de-DE',{minimumFraction
 let odoValues=data.map(x=>Number(x.odo)).filter(Number.isFinite);
 $('totalKm').textContent=odoValues.length?num(Math.max(...odoValues),0):'–';
 $('grossTotal').textContent=euro(data.reduce((a,x)=>a+(Number(x.gross)||0),0));$('netTotal').textContent=euro(data.reduce((a,x)=>a+(Number(x.net)||0),0));$('energyTotal').textContent=num(data.reduce((a,x)=>a+(Number(x.kwh)||0),0))+' kWh';
+const placeEnergy=data.reduce((a,x)=>{
+ const k=Number(x.kwh)||0,t=String(x.placeType||'').toLowerCase();
+ if(t==='privat')a.private+=k; else if(t==='öffentlich'||t==='oeffentlich')a.public+=k; else a.other+=k;
+ return a;
+},{private:0,public:0,other:0});
+const classified=placeEnergy.private+placeEnergy.public;
+const privatePct=classified>0?placeEnergy.private/classified*100:0,publicPct=classified>0?placeEnergy.public/classified*100:0;
+$('privateBar').style.width=privatePct+'%';$('publicBar').style.width=publicPct+'%';
+$('privatePct').textContent=classified?num(privatePct,0)+' %':'0 %';$('publicPct').textContent=classified?num(publicPct,0)+' %':'0 %';
+$('privateKwh').textContent=num(placeEnergy.private)+' kWh';$('publicKwh').textContent=num(placeEnergy.public)+' kWh';
+$('unassignedPlace').textContent=placeEnergy.other>0?'Nicht zugeordnet: '+num(placeEnergy.other)+' kWh':'';
+
 let m={};data.filter(x=>x&&typeof x.date==='string'&&x.date.length>=7).forEach(x=>{let k=x.date.slice(0,7),v=monthlyCostMode==='gross'?x.gross:x.net;m[k]=(m[k]||0)+(Number(v)||0)});let me=Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0])),mx=Math.max(1,...me.map(x=>x[1]));
 $('months').innerHTML=me.length?me.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric'}).format(new Date(Date.UTC(y,mo-1,1)));return `<div class="month"><div class="month-head"><span>${lab}</span><strong>${euro(v)}</strong></div><div class="track"><div class="bar" style="width:${Math.max(1,v/mx*100)}%"></div></div></div>`}).join(''):'Noch keine Daten.';
 let cm={};c.filter(x=>x&&x.dist>0&&Number.isFinite(x.usedKwh)&&typeof x.date==='string'&&x.date.length>=7).forEach(x=>{let k=x.date.slice(0,7);if(!cm[k])cm[k]={dist:0,kwh:0};cm[k].dist+=Number(x.dist)||0;cm[k].kwh+=Number(x.usedKwh)||0});let cme=Object.entries(cm).sort((a,b)=>b[0].localeCompare(a[0])).map(([k,v])=>[k,v.dist>0?v.kwh/v.dist*100:null]).filter(x=>Number.isFinite(x[1]));let cmx=Math.max(1,...cme.map(x=>x[1]));$('monthlyConsumption').innerHTML=cme.length?cme.map(([k,v])=>{let[y,mo]=k.split('-').map(Number),lab=new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric'}).format(new Date(Date.UTC(y,mo-1,1)));return `<div class="month"><div class="month-head"><span>${lab}</span><strong>${num(v)} kWh/100 km</strong></div><div class="track"><div class="bar" style="width:${Math.max(1,v/cmx*100)}%"></div></div></div>`}).join(''):'Noch keine auswertbaren Fahrdaten.';
