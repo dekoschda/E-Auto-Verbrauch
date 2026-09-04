@@ -203,9 +203,9 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
 .month-legend span{display:flex;align-items:center;gap:6px}.lg{width:10px;height:10px;border-radius:50%;display:inline-block}
 .lg-green{background:#2ecc71}.lg-yellow{background:#eadb2b}.lg-orange{background:#ff8a3d}.lg-red{background:#ff5555}
 .lg-blue{background:#3498f5}.lg-purple{background:#8446ef}.lg-magenta{background:#b53bd4}
-.free-charge{display:flex;align-items:center;gap:9px;min-height:44px;margin-top:20px;padding:8px 10px;border:1px solid #666;border-radius:9px;background:#222}
-.free-charge input{width:20px;min-height:20px;height:20px;margin:0;accent-color:#2ecc71}
-.free-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;background:#176a39;color:#caffdd;border:1px solid #2ecc71;font-size:.68rem;font-weight:750;white-space:nowrap}
+
+
+
 .validation-box{grid-column:1/-1;display:none;margin-top:2px;padding:9px 11px;border-radius:9px;font-size:.82rem;line-height:1.45}
 .validation-box.show{display:block}.validation-box.warning{background:#4b3907;border:1px solid #d6a919;color:#ffe59a}.validation-box.error{background:#501d1d;border:1px solid #d75a5a;color:#ffd2d2}
 .rolling-panel{margin-top:14px}.rolling-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:13px}
@@ -283,7 +283,7 @@ button{font-weight:700!important}
 .entry-primary{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
 .entry-date-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.entry-date-line>strong{font-size:.9rem}
 .entry-location{margin-top:3px;font-size:.72rem;color:#c0c7cf}.sep{margin:0 5px;color:#59636e}
-.type-badge,.free-badge{font-size:.58rem!important;border-radius:999px;padding:2px 6px!important;font-weight:800;line-height:1.25}
+.type-badge,
 .type-badge.private{color:#8ee9ac;background:#173e26;border:1px solid #28663b}.type-badge.public{color:#9ac9ff;background:#183958;border:1px solid #275a86}
 .entry-costs{text-align:right;white-space:nowrap}.entry-costs>strong{font-size:.92rem;display:block}.entry-costs>span{display:block;margin-top:2px;color:var(--muted);font-size:.65rem}.entry-costs b{color:#59636e;margin:0 4px}
 .entry-facts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:#181c20;border:1px solid #2f353d;border-radius:10px;margin-top:8px;overflow:hidden}
@@ -299,7 +299,7 @@ button{font-weight:700!important}
 .form-step{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#173e69;color:#a8d2ff;font-size:.7rem;font-weight:800}
 .form-grid{display:grid;gap:9px}.form-grid-5{grid-template-columns:repeat(5,minmax(0,1fr))}.form-grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .form-grid label{margin:0!important;font-size:.68rem!important;color:#b7c0c9}.form-grid input,.form-grid select{margin-top:5px!important;background:#171b1f!important;border-color:#3a424b!important;min-height:42px!important}
-.free-charge{margin:19px 0 0!important;background:#171b1f!important;min-height:42px!important}
+
 .form-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
 .form-footer>div{display:flex;gap:8px}
 
@@ -376,7 +376,6 @@ button{font-weight:700!important}
         <label>Kosten brutto (€)<input id="gross" type="number" min="0" step=".01" required></label>
         <label>MwSt.<select id="vat"><option value="19">19 %</option><option value="7">7 %</option><option value="0">0 %</option></select></label>
         <label>Kosten netto<input id="netPreview" readonly></label>
-        <label class="free-charge"><input id="freeCharge" type="checkbox"><span>Kostenloser Ladevorgang</span></label>
       </div>
     </div>
     <div class="form-card">
@@ -448,7 +447,7 @@ button{font-weight:700!important}
 </nav>
 <script>
 const $=x=>document.getElementById(x), euro=n=>Number(n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}), num=(n,d=1)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
-const APP_VERSION='40',SCHEMA_VERSION=3,KEY='ev-charges-v2',LAST_BACKUP_KEY='ev-last-json-backup-v1';
+const APP_VERSION='41',SCHEMA_VERSION=3,KEY='ev-charges-v2',LAST_BACKUP_KEY='ev-last-json-backup-v1';
 
 // Dock bewusst sehr frueh aktivieren: Navigation bleibt auch bei fehlerhaften Alt-Daten benutzbar.
 const pageNames={history:'Ladehistorie',newcharge:'Neuer Ladevorgang',overview:'Gesamtübersicht',vehicle:'Fahrzeugdaten'};
@@ -492,8 +491,7 @@ function learnProviders(){
 function normalizeCharges(items){return (Array.isArray(items)?items:[]).map(x=>({
   ...x,
   odo:Number(x.odo)||0,kwh:Number(x.kwh)||0,gross:Number(x.gross)||0,
-  net:Number(x.net)||0,vat:Number(x.vat)||0,start:Number(x.start)||0,end:Number(x.end)||0,
-  free:x.free===true||Number(x.gross)===0
+  net:Number(x.net)||0,vat:Number(x.vat)||0,start:Number(x.start)||0,end:Number(x.end)||0
 }))}
 try{
   const savedCharges=localStorage.getItem(KEY);
@@ -512,7 +510,7 @@ $('date').value=new Date().toISOString().slice(0,10);
 function calcNet(){let g=+$('gross').value||0,v=+$('vat').value,n=g/(1+v/100);$('netPreview').value=n.toFixed(2);return n}$('gross').oninput=calcNet;$('vat').onchange=calcNet;
 
 function formCandidate(){
- return {date:$('date').value,odo:Number($('odo').value),kwh:Number($('kwh').value),gross:Number($('gross').value),vat:Number($('vat').value),start:Number($('start').value),end:Number($('end').value),free:$('freeCharge').checked||Number($('gross').value)===0};
+ return {date:$('date').value,odo:Number($('odo').value),kwh:Number($('kwh').value),gross:Number($('gross').value),vat:Number($('vat').value),start:Number($('start').value),end:Number($('end').value)};
 }
 function checkPlausibility(x,currentId=null){
  const errors=[],warnings=[],others=data.filter(v=>v&&v.id!==currentId);
@@ -540,7 +538,7 @@ function checkPlausibility(x,currentId=null){
    const stored=62.1*(x.end-x.start)/100;
    if(stored>x.kwh*1.08)warnings.push('Die berechnete Energie im Akku ist größer als die angegebene Lademenge.');
  }
- if(!x.free&&Number.isFinite(x.gross)&&Number.isFinite(x.kwh)&&x.kwh>0&&x.gross/x.kwh>1.5)warnings.push('Der Preis liegt über 1,50 €/kWh.');
+ if(Number.isFinite(x.gross)&&x.gross>0&&Number.isFinite(x.kwh)&&x.kwh>0&&x.gross/x.kwh>1.5)warnings.push('Der Preis liegt über 1,50 €/kWh.');
  return {errors,warnings};
 }
 function updatePlausibility(){
@@ -551,13 +549,6 @@ function updatePlausibility(){
  box.className='validation-box show '+(result.errors.length?'error':'warning');
  box.innerHTML='<strong>'+(result.errors.length?'Eingabe prüfen:':'Plausibilitätshinweis:')+'</strong><br>'+items.map(esc).join('<br>');
 }
-function applyFreeState(){
- const checked=$('freeCharge').checked,gross=$('gross'),vat=$('vat');
- if(checked){if(!gross.disabled&&gross.value&&Number(gross.value)>0)gross.dataset.previous=gross.value;gross.value='0';vat.value='0'}
- else if(gross.disabled){gross.value=gross.dataset.previous||'';vat.value='19'}
- gross.disabled=checked;vat.disabled=checked;calcNet();updatePlausibility();
-}
-$('freeCharge').addEventListener('change',applyFreeState);
 ['date','odo','kwh','gross','vat','start','end'].forEach(id=>$(id).addEventListener('input',updatePlausibility));
 
 function esc(s){let d=document.createElement('div');d.textContent=s??'';return d.innerHTML}
@@ -669,7 +660,7 @@ filtered.forEach(x=>{const k=x.date.slice(0,7);if(!groups[k])groups[k]=[];groups
 const cardHtml=x=>`<article class="history-entry">
 <div class="entry-primary">
   <div class="entry-identity">
-    <div class="entry-date-line"><strong>${x.date.split('-').reverse().join('.')}</strong>${x.placeType?`<span class="type-badge ${String(x.placeType).toLowerCase().startsWith('priv')?'private':'public'}">${esc(x.placeType)}</span>`:''}${x.free||Number(x.gross)===0?'<span class="free-badge">Kostenlos</span>':''}</div>
+    <div class="entry-date-line"><strong>${x.date.split('-').reverse().join('.')}</strong>${x.placeType?`<span class="type-badge ${String(x.placeType).toLowerCase().startsWith('priv')?'private':'public'}">${esc(x.placeType)}</span>`:''}</div>
     <div class="entry-location">${esc(x.place)||'Kein Ladeort'}<span class="sep">·</span>${esc(x.provider)||'Kein Anbieter'}</div>
   </div>
   <div class="entry-costs"><strong>${euro(Number(x.gross)||0)}</strong><span>${euro(Number(x.net)||0)} <b>·</b> ${Number(x.kwh)>0?euro((Number(x.gross)||0)/Number(x.kwh)):'–'}/kWh</span></div>
@@ -695,8 +686,7 @@ const yearSections=Object.keys(byYear).sort().reverse().map(y=>{
    const kwh=items.reduce((a,x)=>a+(Number(x.kwh)||0),0);
    const gross=items.reduce((a,x)=>a+(Number(x.gross)||0),0);
    const net=items.reduce((a,x)=>a+(Number(x.net)||0),0);
-   const freeCount=items.filter(x=>x.free||Number(x.gross)===0).length;
-   return `<section class="month-group"><div class="month-group-head"><div><h3>${label}</h3><small>${items.length} Ladevorgänge${freeCount?' · '+freeCount+' kostenlos':''}</small></div><div class="month-summary"><strong>${num(kwh)} kWh</strong><span>${euro(gross)} · ${euro(net)}</span></div></div><div class="history-cards-inner">${items.map(cardHtml).join('')}</div></section>`;
+   return `<section class="month-group"><div class="month-group-head"><div><h3>${label}</h3><small>${items.length} Ladevorgänge</small></div><div class="month-summary"><strong>${num(kwh)} kWh</strong><span>${euro(gross)} · ${euro(net)}</span></div></div><div class="history-cards-inner">${items.map(cardHtml).join('')}</div></section>`;
  }).join('');
  const yearItems=byYear[y].flatMap(k=>groups[k]);
  const yearKwh=yearItems.reduce((a,x)=>a+(Number(x.kwh)||0),0);
@@ -712,7 +702,7 @@ $('historyMonth').addEventListener('change',render);
 $('historyType').addEventListener('change',render);
 function resetForm(){editId=null;$('form').reset();$('gross').disabled=false;$('vat').disabled=false;delete $('gross').dataset.previous;$('vat').value='19';$('date').value=new Date().toISOString().slice(0,10);$('formTitle').textContent='Neuen Ladevorgang erfassen';$('cancelEdit').hidden=true;$('msg').textContent='';calcNet();updatePlausibility()}
 window.delEntry=id=>{if(confirm('Diesen Ladevorgang löschen?')){data=data.filter(x=>x.id!==id);persist()}}
-window.editEntry=id=>{let x=data.find(x=>x.id===id);if(!x)return;editId=id;$('gross').disabled=false;$('vat').disabled=false;['date','odo','kwh','gross','vat','start','end','place','provider'].forEach(k=>$(k).value=x[k]);$('placeType').value=x.placeType||'';$('freeCharge').checked=x.free===true||Number(x.gross)===0;$('formTitle').textContent='Ladevorgang bearbeiten';$('cancelEdit').hidden=false;applyFreeState();calcNet();updatePlausibility();goPage('newcharge')}
+window.editEntry=id=>{let x=data.find(x=>x.id===id);if(!x)return;editId=id;$('gross').disabled=false;$('vat').disabled=false;['date','odo','kwh','gross','vat','start','end','place','provider'].forEach(k=>$(k).value=x[k]);$('placeType').value=x.placeType||'';$('formTitle').textContent='Ladevorgang bearbeiten';$('cancelEdit').hidden=false;calcNet();updatePlausibility();goPage('newcharge')}
 $('cancelEdit').onclick=resetForm;
 $('save').onclick=()=>{
  if(!$('form').reportValidity())return;
@@ -720,12 +710,12 @@ $('save').onclick=()=>{
  if(result.errors.length){$('msg').textContent='Bitte die rot markierten Plausibilitätsfehler korrigieren.';return}
  if(result.warnings.length&&!confirm('Plausibilitätshinweis:\n\n• '+result.warnings.join('\n• ')+'\n\nTrotzdem speichern?'))return;
  const gross=candidate.free?0:candidate.gross,vat=candidate.free?0:candidate.vat;
- const obj={id:editId||((globalThis.crypto&&crypto.randomUUID&&crypto.randomUUID())||String(Date.now())),date:candidate.date,odo:candidate.odo,kwh:candidate.kwh,gross,vat,net:gross/(1+vat/100),start:candidate.start,end:candidate.end,free:candidate.free,placeType:$('placeType').value,place:$('place').value.trim(),provider:$('provider').value.trim()};
+ const obj={id:editId||((globalThis.crypto&&crypto.randomUUID&&crypto.randomUUID())||String(Date.now())),date:candidate.date,odo:candidate.odo,kwh:candidate.kwh,gross,vat,net:gross/(1+vat/100),start:candidate.start,end:candidate.end,placeType:$('placeType').value,place:$('place').value.trim(),provider:$('provider').value.trim()};
  if(editId)data[data.findIndex(x=>x.id===editId)]=obj;else data.push(obj);
  persist();resetForm();goPage('history');
 }
 function download(name,text,type){let b=new Blob([text],{type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('csvExport').onclick=()=>{let c=calculated(),h=['Datum','Kilometerstand','Lademenge kWh','Kosten netto EUR','MwSt Prozent','MwSt Betrag EUR','Kosten brutto EUR','Preis EUR/kWh','Kostenlos','Akku Beginn Prozent','Akku Ende Prozent','Art des Ladeorts','Ort','Ladeanbieter','Gefahrene km','kWh/100 km'],q=v=>'"'+String(v??'').replaceAll('"','""')+'"',dec=v=>v==null?'':Number(v).toFixed(2).replace('.',',');let rows=[h,...c.map(x=>[x.date,x.odo,dec(x.kwh),dec(x.net),x.vat,dec(x.gross-x.net),dec(x.gross),dec(x.gross/x.kwh),x.free||Number(x.gross)===0?'Ja':'Nein',x.start,x.end,x.placeType||'',x.place,x.provider,x.dist??'',x.cons==null?'':dec(x.cons)])];download('E-Auto-Verbrauch.csv','\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
+$('csvExport').onclick=()=>{let c=calculated(),h=['Datum','Kilometerstand','Lademenge kWh','Kosten netto EUR','MwSt Prozent','MwSt Betrag EUR','Kosten brutto EUR','Preis EUR/kWh','Akku Beginn Prozent','Akku Ende Prozent','Art des Ladeorts','Ort','Ladeanbieter','Gefahrene km','kWh/100 km'],q=v=>'"'+String(v??'').replaceAll('"','""')+'"',dec=v=>v==null?'':Number(v).toFixed(2).replace('.',',');let rows=[h,...c.map(x=>[x.date,x.odo,dec(x.kwh),dec(x.net),x.vat,dec(x.gross-x.net),dec(x.gross),dec(x.gross/x.kwh),x.start,x.end,x.placeType||'',x.place,x.provider,x.dist??'',x.cons==null?'':dec(x.cons)])];download('E-Auto-Verbrauch.csv','\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
 $('backup').onclick=()=>{
  const createdAt=new Date().toISOString();
  const backup={format:'E-Auto-Verbrauch-PWA',schemaVersion:SCHEMA_VERSION,appVersion:APP_VERSION,createdAt,vehicle:{name:'MG S5 EV Luxury Long Range',usableBatteryKwh:62.1},charges:data,providers,settings:{monthlyCostMode,consumptionYearFilter,costYearFilter}};
@@ -784,8 +774,7 @@ function parseCSV(text){
     date:idx('Datum','Date'), odo:idx('Kilometerstand','km Stand','Odometer'),
     kwh:idx('Lademenge kWh','Lademenge','kWh'), net:idx('Kosten netto EUR','Kosten netto','Netto'),
     vat:idx('MwSt Prozent','MwSt','USt Prozent'), gross:idx('Kosten brutto EUR','Kosten brutto','Brutto','Kosten'),
-    start:idx('Akku Beginn Prozent','Akku Beginn','SOC Beginn'), end:idx('Akku Ende Prozent','Akku Ende','SOC Ende'),
-    free:idx('Kostenlos','Kostenfreie Ladung'),placeType:idx('Art des Ladeorts','Ladeortart','Privat Öffentlich'), place:idx('Ort','Ladeort'), provider:idx('Ladeanbieter','Anbieter')
+    start:idx('Akku Beginn Prozent','Akku Beginn','SOC Beginn'), end:idx('Akku Ende Prozent','Akku Ende','SOC Ende'),placeType:idx('Art des Ladeorts','Ladeortart','Privat Öffentlich'), place:idx('Ort','Ladeort'), provider:idx('Ladeanbieter','Anbieter')
   };
   if(I.date<0||I.odo<0||I.kwh<0) throw new Error('Pflichtspalten Datum, Kilometerstand oder Lademenge fehlen.');
 
@@ -796,7 +785,6 @@ function parseCSV(text){
       id:(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()+Math.random()),
       date:date(r[I.date]), odo:dec(r[I.odo]), kwh:dec(r[I.kwh]), net, vat, gross,
       start:I.start>=0?dec(r[I.start]):0, end:I.end>=0?dec(r[I.end]):0,
-      free:I.free>=0?/^(ja|yes|true|1)$/i.test(String(r[I.free]||'').trim()):gross===0,
       placeType:I.placeType>=0?(r[I.placeType]||''):'', place:I.place>=0?(r[I.place]||''):'', provider:I.provider>=0?(r[I.provider]||''):''
     };
   }).filter(x=>x.date&&x.kwh>0);
