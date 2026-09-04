@@ -165,7 +165,39 @@ form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}label{font-size:.
  #page-overview .overview-top .metric strong{font-size:1.15rem!important}
  #page-overview .overview-top .metric-head{font-size:.70rem!important}
 }
-</style></head>
+</style>
+<style id="v30-final-overview">
+#page-overview section.overview-metrics.overview-top{
+ display:grid !important;
+ grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+ grid-auto-flow:row !important;
+ gap:10px !important;
+ width:100% !important;
+}
+#page-overview section.overview-metrics.overview-top>.card{
+ width:auto !important;
+ min-width:0 !important;
+ min-height:112px !important;
+ margin:0 !important;
+ padding:12px 13px 10px !important;
+ border-width:2px !important;
+ border-style:solid !important;
+ border-radius:11px !important;
+ box-sizing:border-box !important;
+}
+#page-overview .overview-top .metric-head{display:flex!important;align-items:center!important;gap:8px!important;font-size:.78rem!important;white-space:nowrap!important;margin-bottom:10px!important}
+#page-overview .overview-top .metric strong{display:block!important;text-align:center!important;font-size:1.38rem!important;white-space:nowrap!important}
+#page-overview .overview-top .metric small{display:block!important;text-align:center!important;font-size:.68rem!important;margin-top:5px!important}
+#page-overview .metric-km{border-color:#147bd1!important;background:linear-gradient(135deg,#06385f,#092a47)!important}
+#page-overview .metric-cons{border-color:#159447!important;background:linear-gradient(135deg,#07562c,#073c25)!important}
+#page-overview .metric-eurokm{border-color:#f59b00!important;background:linear-gradient(135deg,#704400,#402900)!important}
+#page-overview .metric-charge{border-color:#8f35b7!important;background:linear-gradient(135deg,#512069,#321846)!important}
+#page-overview .metric-gross{border-color:#1595a3!important;background:linear-gradient(135deg,#07535b,#073b42)!important}
+#page-overview .metric-net{border-color:#1678ce!important;background:linear-gradient(135deg,#07447b,#082f58)!important}
+@media(max-width:1050px){#page-overview section.overview-metrics.overview-top{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:600px){#page-overview section.overview-metrics.overview-top{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+</style>
+</head>
 <body><main><h1>⚡ E-Auto Verbrauch</h1><p id="pageSubtitle" class="muted">Ladehistorie</p>
 
 
